@@ -4,12 +4,14 @@
   --background: #ffffff;
   --foreground: #171717;
   --orange-glow: rgba(249, 115, 22, 0.15);
+  color-scheme: light;
 }
 
 .dark {
   --background: #0a0a0a;
   --foreground: #ededed;
   --orange-glow: rgba(249, 115, 22, 0.25);
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -24,19 +26,6 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
 }
-
-/* Dark mode overrides for common patterns */
-.dark body { background: #0a0a0a; }
-.dark .bg-white { background: #111111 !important; }
-.dark .bg-gray-50 { background: #0a0a0a !important; }
-.dark .bg-gray-100 { background: #1a1a1a !important; }
-.dark .border-gray-100, .dark .border-gray-200 { border-color: #222 !important; }
-.dark .text-gray-900 { color: #f0f0f0 !important; }
-.dark .text-gray-800 { color: #ddd !important; }
-.dark .text-gray-700 { color: #bbb !important; }
-.dark .text-gray-600 { color: #999 !important; }
-.dark .text-gray-500 { color: #888 !important; }
-.dark .text-gray-400 { color: #666 !important; }
 
 /* Shimmer animation for skeletons */
 @keyframes shimmer {

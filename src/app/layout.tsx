@@ -20,6 +20,9 @@ export const metadata: Metadata = {
     "Move anything, anywhere in Nigeria. Post loads, find carriers, track deliveries in real-time. Built for African logistics.",
 };
 
+// Blocking script to set dark class before any rendering — prevents FOUC
+const themeScript = `(function(){try{var t=localStorage.getItem("pulse-theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches)){document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark"}else{document.documentElement.style.colorScheme="light"}}catch(e){}})()`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,6 +30,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

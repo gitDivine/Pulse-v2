@@ -44,7 +44,7 @@ export default function OnboardingPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error: profileError } = await supabase.from("profiles").insert({
+      const { error: profileError } = await supabase.from("profiles").upsert({
         id: user.id,
         role: role as UserRole,
         phone: phone || null,
@@ -54,7 +54,7 @@ export default function OnboardingPage() {
         state: state || null,
         city: city || null,
         verification_level: "phone",
-      });
+      }, { onConflict: "id" });
       if (profileError) throw profileError;
 
       if (role === "carrier" && vehicleType && plateNumber) {

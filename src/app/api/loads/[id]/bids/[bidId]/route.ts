@@ -77,25 +77,25 @@ export async function PATCH(
         .single();
       const trip = tripData as any;
 
-      // Notify carrier
-      await serviceSupabase.from("notifications").insert({
+      // Notify carrier (non-blocking — don't break accept if notification fails)
+      serviceSupabase.from("notifications").insert({
         user_id: bid.carrier_id,
         title: "Bid accepted!",
         body: `Your bid on load ${load.load_number} was accepted. Prepare for pickup.`,
         priority: "critical",
         action_url: `/carrier/trips/${trip?.id}`,
-      });
+      }).then(() => {});
 
       return NextResponse.json({ bid, trip });
     }
 
-    // Notify carrier of rejection
-    await serviceSupabase.from("notifications").insert({
+    // Notify carrier of rejection (non-blocking)
+    serviceSupabase.from("notifications").insert({
       user_id: bid.carrier_id,
       title: "Bid not selected",
       body: `Your bid on load ${load.load_number} was not selected.`,
       priority: "low",
-    });
+    }).then(() => {});
 
     return NextResponse.json({ bid });
   } catch {

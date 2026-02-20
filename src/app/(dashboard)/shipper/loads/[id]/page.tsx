@@ -44,19 +44,20 @@ export default function LoadDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (status === "accepted" && data.trip) {
-          router.push(`/shipper/loads/${id}`);
-        }
-        // Refresh data
-        const [loadRes, bidsRes] = await Promise.all([
-          fetch(`/api/loads/${id}`),
-          fetch(`/api/loads/${id}/bids`),
-        ]);
-        setLoad((await loadRes.json()).load);
-        setBids((await bidsRes.json()).bids || []);
+      const data = await res.json();
+      if (!res.ok) {
+        alert(`Error: ${data.error || "Failed to update bid"}`);
+        return;
       }
+      // Refresh data
+      const [loadRes, bidsRes] = await Promise.all([
+        fetch(`/api/loads/${id}`),
+        fetch(`/api/loads/${id}/bids`),
+      ]);
+      setLoad((await loadRes.json()).load);
+      setBids((await bidsRes.json()).bids || []);
+    } catch (err) {
+      alert("Network error. Please try again.");
     } finally {
       setActionLoading(null);
     }

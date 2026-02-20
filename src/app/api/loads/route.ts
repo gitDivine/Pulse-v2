@@ -19,7 +19,14 @@ export async function GET(request: NextRequest) {
       .from("loads")
       .select("*, profiles!loads_shipper_id_fkey(full_name, company_name, avg_rating, total_reviews)", { count: "exact" });
 
-    if (status) query = query.eq("status", status as any);
+    if (status) {
+      const statuses = status.split(",");
+      if (statuses.length > 1) {
+        query = query.in("status", statuses as any);
+      } else {
+        query = query.eq("status", status as any);
+      }
+    }
     if (originState) query = query.eq("origin_state", originState as any);
     if (destinationState) query = query.eq("destination_state", destinationState as any);
     if (cargoType) query = query.eq("cargo_type", cargoType as any);

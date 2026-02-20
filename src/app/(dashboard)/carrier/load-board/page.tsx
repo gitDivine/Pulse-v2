@@ -27,7 +27,7 @@ export default function LoadBoardPage() {
     async function fetchLoads() {
       setLoading(true);
       const params = new URLSearchParams();
-      params.set("status", "posted");
+      params.set("status", "posted,bidding");
       if (originState) params.set("origin_state", originState);
       if (destState) params.set("destination_state", destState);
       if (cargoType) params.set("cargo_type", cargoType);

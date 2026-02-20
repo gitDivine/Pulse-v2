@@ -153,3 +153,11 @@ PULSE is Africa's Logistics Nervous System — a two-sided freight marketplace c
 - Build succeeds: 33 routes
 - **What's pending**: Run 006_carrier_directory.sql in Supabase, test carrier directory flow
 - **Next steps**: Run migration → test browse carriers → favorite → invite to bid
+
+### Session 8 — 2026-02-20 (continued)
+- Built **Duplicate Load** ("Post Again"): button on shipper load detail page pre-fills post-load form via URL params, skips to Cargo step since route stays same but cargo changes
+- Built **Notification Bell** in topbar: unread count badge (polls 30s), dropdown with priority dots, mark as read, mark all read, action links, spring animations
+- Built **Cancel Load** for shippers: two-step confirmation, rejects pending bids, notifies carriers, handles accepted loads (marks trip as disputed)
+- Built **Carrier Bid Withdrawal**: carriers can withdraw pending bids with confirmation, shipper gets notified
+- Updated bid API to handle three flows: shipper accept, shipper reject, carrier withdraw (with proper ownership checks for each)
+- All features committed and pushed

@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatNaira, timeAgo, formatWeight } from "@/lib/utils/format";
 import { LOAD_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, Package, Star, Send } from "lucide-react";
+import { MapPin, Package, Star, Send, XCircle } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 export default function CarrierLoadDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +30,9 @@ export default function CarrierLoadDetailPage() {
   const [bidMessage, setBidMessage] = useState("");
   const [vehicleId, setVehicleId] = useState("");
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [withdrawConfirm, setWithdrawConfirm] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchData() {
@@ -87,6 +91,26 @@ export default function CarrierLoadDetailPage() {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setBidLoading(false);
+    }
+  }
+
+  async function handleWithdraw() {
+    setWithdrawLoading(true);
+    try {
+      const res = await fetch(`/api/loads/${id}/bids/${existingBid.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "withdrawn" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to withdraw bid");
+      setExistingBid({ ...existingBid, status: "withdrawn" });
+      setWithdrawConfirm(false);
+      toast("Bid withdrawn", "success");
+    } catch (err: any) {
+      toast(err.message || "Failed to withdraw bid", "error");
+    } finally {
+      setWithdrawLoading(false);
     }
   }
 
@@ -206,14 +230,57 @@ export default function CarrierLoadDetailPage() {
 
         {/* Bid form or existing bid */}
         {existingBid ? (
-          <Card className="border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/5">
+          <Card className={`${existingBid.status === "withdrawn" ? "border-gray-200 dark:border-white/10" : "border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/5"}`}>
             <CardTitle className="mb-2">Your Bid</CardTitle>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">{formatNaira(existingBid.amount)}</p>
-            <Badge className={existingBid.status === "accepted" ? "bg-green-100 text-green-800" : existingBid.status === "rejected" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}>
-              {existingBid.status}
-            </Badge>
+            <div className="flex items-center justify-between">
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{formatNaira(existingBid.amount)}</p>
+              <Badge className={
+                existingBid.status === "accepted" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" :
+                existingBid.status === "rejected" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" :
+                existingBid.status === "withdrawn" ? "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400" :
+                "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+              }>
+                {existingBid.status}
+              </Badge>
+            </div>
             {existingBid.message && (
               <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{existingBid.message}</p>
+            )}
+            {existingBid.status === "pending" && (
+              <div className="mt-3 pt-3 border-t border-blue-100 dark:border-blue-500/10">
+                {!withdrawConfirm ? (
+                  <button
+                    onClick={() => setWithdrawConfirm(true)}
+                    className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Withdraw bid
+                  </button>
+                ) : (
+                  <div>
+                    <p className="text-sm text-gray-900 dark:text-white font-medium mb-2">
+                      Withdraw this bid?
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={handleWithdraw}
+                        loading={withdrawLoading}
+                      >
+                        Yes, withdraw
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setWithdrawConfirm(false)}
+                      >
+                        Keep it
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </Card>
         ) : (load.status === "posted" || load.status === "bidding") ? (

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, createServiceRoleSupabase } from "@/lib/supabase/server";
 
-// PATCH /api/loads/[id]/bids/[bidId] — accept or reject a bid
+function formatKobo(kobo: number): string {
+  return `₦${(kobo / 100).toLocaleString()}`;
+}
+
+// PATCH /api/loads/[id]/bids/[bidId] — accept, reject, or withdraw a bid
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; bidId: string }> }
@@ -16,9 +20,9 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status } = body; // "accepted" or "rejected"
+    const { status } = body; // "accepted", "rejected", or "withdrawn"
 
-    if (!["accepted", "rejected"].includes(status)) {
+    if (!["accepted", "rejected", "withdrawn"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
@@ -29,6 +33,48 @@ export async function PATCH(
     // Use service role for cross-table operations
     const serviceSupabase = await createServiceRoleSupabase();
 
+    // --- Carrier withdrawing their own bid ---
+    if (status === "withdrawn") {
+      const { data: bidData, error: bidError } = await serviceSupabase
+        .from("bids")
+        .select("id, load_id, carrier_id, amount, status, loads(load_number, shipper_id)")
+        .eq("id", bidId)
+        .eq("load_id", loadId)
+        .eq("carrier_id", user.id)
+        .single();
+
+      if (bidError || !bidData) {
+        return NextResponse.json({ error: "Bid not found" }, { status: 404 });
+      }
+
+      const bid = bidData as any;
+
+      if (bid.status !== "pending") {
+        return NextResponse.json({ error: "Only pending bids can be withdrawn" }, { status: 400 });
+      }
+
+      const { data: updated, error: updateError } = await serviceSupabase
+        .from("bids")
+        .update({ status: "withdrawn" })
+        .eq("id", bidId)
+        .select("id, load_id, carrier_id, vehicle_id, amount, status")
+        .single();
+
+      if (updateError) throw updateError;
+
+      // Notify shipper (non-blocking)
+      serviceSupabase.from("notifications").insert({
+        user_id: bid.loads.shipper_id,
+        title: "Bid withdrawn",
+        body: `A carrier withdrew their ${formatKobo(bid.amount)} bid on load ${bid.loads.load_number}.`,
+        priority: "normal",
+        action_url: `/shipper/loads/${loadId}`,
+      }).then(() => {});
+
+      return NextResponse.json({ bid: updated });
+    }
+
+    // --- Shipper accepting or rejecting a bid ---
     // Verify the shipper owns this load
     const { data: load } = await serviceSupabase
       .from("loads")

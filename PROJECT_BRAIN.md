@@ -5,7 +5,9 @@ PULSE is Africa's Commerce Nervous System — a unified platform with four engin
 
 ## Current State
 - **Phase**: Phase 1 — FLOW (SME Commerce Operating System)
-- **Status**: Initial project setup
+- **Status**: Deployed to production
+- **Live URL**: https://pulse-one-mu.vercel.app
+- **GitHub**: https://github.com/gitDivine/Pulse
 - **Stack**: Next.js 14+ (App Router), TypeScript, Tailwind CSS, Supabase, Paystack
 
 ## Architecture
@@ -66,13 +68,19 @@ PULSE is Africa's Commerce Nervous System — a unified platform with four engin
 - [x] Settings page (storefront link, quiet hours, account info)
 - [x] Landing page (hero, four engines, value props, CTA)
 - [x] Build compiles successfully
-- [ ] Connect real Supabase project (user needs to create account)
-- [ ] Run database migration (001_initial_schema.sql)
+- [x] Connect real Supabase project
+- [x] Run database migration (001_initial_schema.sql)
+- [x] Auth switched from phone OTP to email + password ($0 cost)
+- [x] Paystack account created (test mode keys configured)
+- [x] AI keys configured (Groq + Gemini)
+- [x] Supabase Realtime enabled for messages, conversations, orders
+- [x] Deployed to Vercel: https://pulse-one-mu.vercel.app
+- [x] GitHub repo: https://github.com/gitDivine/Pulse
 - [ ] Notification system (beyond basic DB entries)
 - [ ] Basic SCOUT address resolution
 
 ## Blockers
-- `.env.local` has placeholder values — user needs to create Supabase project and Paystack account to test
+- None currently
 
 ## Session Log
 ### Session 1 — 2026-02-20
@@ -91,3 +99,22 @@ PULSE is Africa's Commerce Nervous System — a unified platform with four engin
 - **What's done**: Full working FLOW app — auth, onboarding, products, orders, inbox, analytics, settings, storefront, checkout, payments, chat, landing page
 - **What's pending**: User needs to create Supabase project, run migration, add real env vars to test end-to-end
 - **Next steps**: Create Supabase project → run migration → test auth flow → test storefront → test orders
+
+### Session 3 — 2026-02-20 (continued)
+- Switched auth from phone OTP to email + password (Twilio required for phone auth — costs money)
+- Updated login, signup, onboarding pages for email auth
+- Connected real Supabase project (ghcipxuufmcynoyvncac)
+- Migration ran successfully in Supabase SQL Editor
+- Fixed phone nullable type mismatch in settings
+- Fixed all select("*") → explicit column selection across 7 files
+
+### Session 4 — 2026-02-20 (continued)
+- Configured Paystack test keys, Groq API key, Gemini API key
+- Enabled Supabase Realtime for messages, conversations, orders tables
+- Initialized git repo, committed 59 files (12,056 lines)
+- Pushed to GitHub: https://github.com/gitDivine/Pulse
+- Deployed to Vercel: https://pulse-one-mu.vercel.app
+- All environment variables configured on Vercel
+- **What's done**: Full FLOW app deployed and live
+- **What's pending**: Configure Supabase Auth redirect URL to Vercel domain, set NEXT_PUBLIC_APP_URL on Vercel, test end-to-end flows
+- **Next steps**: Test signup → onboarding → dashboard → create product → view storefront → place order

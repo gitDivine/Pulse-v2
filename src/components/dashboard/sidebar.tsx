@@ -16,6 +16,7 @@ import {
   PlusCircle,
   Wallet,
   Users,
+  Gavel,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -32,6 +33,7 @@ const shipperNavItems = [
 const carrierNavItems = [
   { href: "/carrier/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/carrier/load-board", label: "Load Board", icon: Search },
+  { href: "/carrier/bids", label: "My Bids", icon: Gavel },
   { href: "/carrier/trips", label: "My Trips", icon: MapPin },
   { href: "/carrier/vehicles", label: "Vehicles", icon: Truck },
   { href: "/carrier/earnings", label: "Earnings", icon: Wallet },

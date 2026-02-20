@@ -161,3 +161,11 @@ PULSE is Africa's Logistics Nervous System — a two-sided freight marketplace c
 - Built **Carrier Bid Withdrawal**: carriers can withdraw pending bids with confirmation, shipper gets notified
 - Updated bid API to handle three flows: shipper accept, shipper reject, carrier withdraw (with proper ownership checks for each)
 - All features committed and pushed
+- **Re-bid after withdrawal**: carriers can now bid again after withdrawing (withdrawn bids ignored on page load, form resets on withdraw)
+- **Clickable notifications**: entire notification row navigates to action_url + marks as read (no more tiny icon)
+- **Invitations tab on load board**: "All Loads" | "Invitations" tabs with badge count, fetches carrier's pending invitations with full load details
+- Added GET /api/bid-invitations for carrier-side invitation fetching
+- **Bid pre-fill**: carrier bid amount auto-fills with shipper's budget, hint shows negotiable vs fixed price
+- **My Bids page**: new `/carrier/bids` page with filter pills (All/Pending/Accepted/Rejected/Withdrawn), bid cards with load route, amount, status badge, shipper info
+- Added GET /api/bids for fetching carrier's bids with load details
+- Added "My Bids" (Gavel icon) to carrier sidebar between Load Board and My Trips

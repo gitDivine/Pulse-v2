@@ -133,3 +133,23 @@ PULSE is Africa's Logistics Nervous System — a two-sided freight marketplace c
 - **What's done**: Complete logistics marketplace codebase — shippers post loads, carriers bid, trips tracked, payments via Paystack
 - **What's pending**: Run migration SQL in Supabase, test end-to-end, verify Vercel deployment
 - **Next steps**: Run `002_logistics_schema.sql` in Supabase SQL Editor → test signup as shipper → post load → signup as carrier → bid → accept → track → deliver
+
+### Session 6 — 2026-02-20 (continued)
+- Fixed dark mode across button, card, topbar components
+- Fixed createServiceRoleSupabase: switched from @supabase/ssr createServerClient (sends user JWT) to @supabase/supabase-js createClient (properly bypasses RLS)
+- Fixed carrier load visibility RLS: created 004_carrier_load_visibility.sql, then fixed infinite recursion with 005_fix_carrier_load_recursion.sql (SECURITY DEFINER function)
+- Fixed trip PATCH API: now returns full load join (was only returning shipper_id, load_number)
+- Fixed error surfacing in load creation and bid acceptance
+- Core flow confirmed working: post load → bid → accept → track → deliver
+
+### Session 7 — 2026-02-20 (continued)
+- Built **Carrier Directory** feature: shippers can browse carriers, favorite them, invite them to bid
+- Created 006_carrier_directory.sql: favorites table, bid_invitations table, carrier profile visibility policy, auto-update trigger
+- Added types: InvitationStatus, favorites + bid_invitations table types in database.ts
+- Added constants: RATING_OPTIONS, VERIFICATION_LABELS
+- Created 4 new API routes: GET /api/carriers (filters), GET+POST /api/favorites, DELETE /api/favorites/[carrierId], POST /api/bid-invitations
+- Updated sidebar: added "Find Carriers" to shipper navigation
+- Built carrier directory page: search, filters (state, vehicle type, rating), favorites toggle, carrier cards with heart toggle, invite-to-bid modal with load selector
+- Build succeeds: 33 routes
+- **What's pending**: Run 006_carrier_directory.sql in Supabase, test carrier directory flow
+- **Next steps**: Run migration → test browse carriers → favorite → invite to bid

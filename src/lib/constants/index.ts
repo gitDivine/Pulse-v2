@@ -59,6 +59,19 @@ export const TRIP_STATUS_LABELS: Record<string, { label: string; color: string }
   disputed: { label: "Disputed", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
 };
 
+export const RATING_OPTIONS = [
+  { value: "", label: "Any rating" },
+  { value: "3", label: "3+ stars" },
+  { value: "4", label: "4+ stars" },
+  { value: "4.5", label: "4.5+ stars" },
+] as const;
+
+export const VERIFICATION_LABELS: Record<string, { label: string; color: string }> = {
+  phone: { label: "Phone Verified", color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
+  bvn_nin: { label: "ID Verified", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  cac: { label: "CAC Verified", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+};
+
 export const NOTIFICATION_PRIORITIES = {
   critical: { label: "Critical", respectsQuietHours: false },
   normal: { label: "Normal", respectsQuietHours: true },

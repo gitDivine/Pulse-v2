@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ export default function PostLoadPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Pickup
   const [originAddress, setOriginAddress] = useState("");
@@ -47,6 +48,31 @@ export default function PostLoadPage() {
   const [isNegotiable, setIsNegotiable] = useState(true);
   const [pickupDate, setPickupDate] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
+
+  // Pre-fill from search params (duplicate load)
+  useEffect(() => {
+    if (!searchParams.get("duplicate")) return;
+    // Route (pre-filled, shipper skips past these)
+    setOriginAddress(searchParams.get("origin_address") || "");
+    setOriginLandmark(searchParams.get("origin_landmark") || "");
+    setOriginCity(searchParams.get("origin_city") || "");
+    setOriginState(searchParams.get("origin_state") || "");
+    setDestAddress(searchParams.get("dest_address") || "");
+    setDestLandmark(searchParams.get("dest_landmark") || "");
+    setDestCity(searchParams.get("dest_city") || "");
+    setDestState(searchParams.get("dest_state") || "");
+    // Cargo (pre-filled but shipper lands here to change)
+    setCargoType(searchParams.get("cargo_type") || "general");
+    setCargoDescription(searchParams.get("cargo_description") || "");
+    setWeightKg(searchParams.get("weight_kg") || "");
+    setQuantity(searchParams.get("quantity") || "1");
+    setSpecialInstructions(searchParams.get("special_instructions") || "");
+    // Budget (pre-filled, dates left empty for fresh entry)
+    if (searchParams.get("budget_amount")) setBudgetAmount(searchParams.get("budget_amount")!);
+    setIsNegotiable(searchParams.get("is_negotiable") !== "false");
+    // Skip to Cargo step — route is already filled, cargo is what changes
+    setStep(2);
+  }, [searchParams]);
 
   async function handleSubmit() {
     setError("");

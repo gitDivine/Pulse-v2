@@ -15,6 +15,7 @@ import {
   Moon,
   PlusCircle,
   Wallet,
+  Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -24,6 +25,7 @@ const shipperNavItems = [
   { href: "/shipper/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/shipper/post-load", label: "Post a Load", icon: PlusCircle },
   { href: "/shipper/loads", label: "My Loads", icon: Package },
+  { href: "/shipper/carriers", label: "Find Carriers", icon: Users },
   { href: "/shipper/settings", label: "Settings", icon: Settings },
 ];
 

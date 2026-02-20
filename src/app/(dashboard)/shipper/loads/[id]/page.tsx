@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatNaira, timeAgo, formatWeight, formatDuration } from "@/lib/utils/format";
 import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck } from "lucide-react";
+import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy } from "lucide-react";
+import Link from "next/link";
 
 export default function LoadDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -115,6 +116,26 @@ export default function LoadDetailPage() {
   const statusInfo = LOAD_STATUS_LABELS[load.status] || { label: load.status, color: "bg-gray-100 text-gray-800" };
   const cargoLabel = CARGO_TYPES.find((c) => c.value === load.cargo_type)?.label || load.cargo_type;
 
+  // Build duplicate URL with all load fields as search params
+  const duplicateParams = new URLSearchParams({
+    duplicate: "1",
+    origin_address: load.origin_address || "",
+    origin_landmark: load.origin_landmark || "",
+    origin_city: load.origin_city || "",
+    origin_state: load.origin_state || "",
+    dest_address: load.destination_address || "",
+    dest_landmark: load.destination_landmark || "",
+    dest_city: load.destination_city || "",
+    dest_state: load.destination_state || "",
+    cargo_type: load.cargo_type || "general",
+    cargo_description: load.cargo_description || "",
+    weight_kg: load.weight_kg ? String(load.weight_kg) : "",
+    quantity: load.quantity ? String(load.quantity) : "1",
+    special_instructions: load.special_instructions || "",
+    budget_amount: load.budget_amount ? String(load.budget_amount / 100) : "",
+    is_negotiable: String(load.is_negotiable ?? true),
+  });
+
   return (
     <div>
       <Topbar title={load.load_number} />
@@ -123,8 +144,15 @@ export default function LoadDetailPage() {
         {/* Status + Route */}
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
-            <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo(load.created_at)}</span>
+            <div className="flex items-center gap-2">
+              <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo(load.created_at)}</span>
+            </div>
+            <Link href={`/shipper/post-load?${duplicateParams}`}>
+              <Button size="sm" variant="outline">
+                <Copy className="h-3.5 w-3.5 mr-1" /> Post Again
+              </Button>
+            </Link>
           </div>
 
           <div className="flex items-start gap-3">

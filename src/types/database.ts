@@ -15,6 +15,7 @@ export type VehicleType = "motorcycle" | "car" | "van" | "pickup_truck" | "box_t
 export type TrackingEventType = "status_update" | "location_update" | "note" | "photo" | "issue";
 export type NotificationPriority = "critical" | "normal" | "low";
 export type VerificationLevel = "phone" | "bvn_nin" | "cac";
+export type InvitationStatus = "pending" | "viewed" | "bid_placed" | "expired";
 
 export interface Database {
   public: {
@@ -356,6 +357,41 @@ export interface Database {
         };
         Relationships: [];
       };
+      favorites: {
+        Row: {
+          id: string;
+          shipper_id: string;
+          carrier_id: string;
+          created_at: string;
+        };
+        Insert: {
+          shipper_id: string;
+          carrier_id: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      bid_invitations: {
+        Row: {
+          id: string;
+          load_id: string;
+          shipper_id: string;
+          carrier_id: string;
+          status: InvitationStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          load_id: string;
+          shipper_id: string;
+          carrier_id: string;
+          status?: InvitationStatus;
+        };
+        Update: {
+          status?: InvitationStatus;
+        };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           id: string;
@@ -393,6 +429,7 @@ export interface Database {
       tracking_event_type: TrackingEventType;
       notification_priority: NotificationPriority;
       verification_level: VerificationLevel;
+      invitation_status: InvitationStatus;
     };
     CompositeTypes: Record<string, never>;
   };

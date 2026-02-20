@@ -1,0 +1,267 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { Topbar } from "@/components/dashboard/topbar";
+import { Card, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { formatNaira, timeAgo, formatWeight } from "@/lib/utils/format";
+import { LOAD_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
+import { MapPin, Package, Star, Send } from "lucide-react";
+
+export default function CarrierLoadDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const supabase = createClient();
+  const [load, setLoad] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [bidLoading, setBidLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [existingBid, setExistingBid] = useState<any>(null);
+
+  // Bid form
+  const [bidAmount, setBidAmount] = useState("");
+  const [estimatedHours, setEstimatedHours] = useState("");
+  const [bidMessage, setBidMessage] = useState("");
+  const [vehicleId, setVehicleId] = useState("");
+  const [vehicles, setVehicles] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const [loadRes, vehiclesRes] = await Promise.all([
+        fetch(`/api/loads/${id}`),
+        fetch("/api/vehicles"),
+      ]);
+
+      const loadData = await loadRes.json();
+      const vehiclesData = await vehiclesRes.json();
+      setLoad(loadData.load);
+      setVehicles(vehiclesData.vehicles || []);
+
+      // Check if user already bid
+      const { data: bids } = await supabase
+        .from("bids")
+        .select("*")
+        .eq("load_id", id)
+        .eq("carrier_id", user.id)
+        .single();
+
+      if (bids) setExistingBid(bids);
+      setLoading(false);
+    }
+    fetchData();
+  }, [id, supabase]);
+
+  async function handleBid(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setBidLoading(true);
+
+    try {
+      const res = await fetch(`/api/loads/${id}/bids`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: parseInt(bidAmount) * 100, // naira to kobo
+          estimated_hours: estimatedHours ? parseInt(estimatedHours) : null,
+          message: bidMessage || null,
+          vehicle_id: vehicleId || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to place bid");
+      }
+
+      const data = await res.json();
+      setExistingBid(data.bid);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setBidLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div>
+        <Topbar title="Load Detail" />
+        <div className="p-6 space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!load) {
+    return (
+      <div>
+        <Topbar title="Load Detail" />
+        <div className="p-6 text-center py-12">
+          <p className="text-gray-500">Load not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  const statusInfo = LOAD_STATUS_LABELS[load.status] || { label: load.status, color: "bg-gray-100 text-gray-800" };
+  const cargoLabel = CARGO_TYPES.find((c) => c.value === load.cargo_type)?.label || load.cargo_type;
+  const shipper = load.profiles;
+
+  return (
+    <div>
+      <Topbar title={load.load_number} />
+
+      <div className="p-6 space-y-4 max-w-3xl">
+        {/* Route */}
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+            <span className="text-xs text-gray-500">{timeAgo(load.created_at)}</span>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="flex flex-col items-center gap-1">
+              <div className="h-3 w-3 rounded-full border-2 border-orange-500 bg-white dark:bg-[#111]" />
+              <div className="w-0.5 h-8 bg-gray-200 dark:bg-gray-700" />
+              <div className="h-3 w-3 rounded-full bg-orange-500" />
+            </div>
+            <div className="flex-1 space-y-4">
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{load.origin_address}</p>
+                <p className="text-xs text-gray-500">{load.origin_city}, {load.origin_state}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{load.destination_address}</p>
+                <p className="text-xs text-gray-500">{load.destination_city}, {load.destination_state}</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Cargo + Shipper */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card>
+            <CardTitle className="mb-3">Cargo</CardTitle>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Type</span>
+                <span className="font-medium text-gray-900 dark:text-white">{cargoLabel}</span>
+              </div>
+              {load.weight_kg && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Weight</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{formatWeight(load.weight_kg)}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Qty</span>
+                <span className="font-medium text-gray-900 dark:text-white">{load.quantity}</span>
+              </div>
+              {load.budget_amount && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Budget</span>
+                  <span className="font-bold text-orange-600">{formatNaira(load.budget_amount)}</span>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          <Card>
+            <CardTitle className="mb-3">Shipper</CardTitle>
+            <div className="space-y-2 text-sm">
+              <p className="font-medium text-gray-900 dark:text-white">
+                {shipper?.company_name || shipper?.full_name}
+              </p>
+              {shipper?.avg_rating > 0 && (
+                <div className="flex items-center gap-1 text-yellow-600">
+                  <Star className="h-3.5 w-3.5 fill-current" />
+                  {shipper.avg_rating.toFixed(1)} ({shipper.total_reviews} reviews)
+                </div>
+              )}
+              <p className="text-gray-500 dark:text-gray-400">
+                {load.bid_count} bid{load.bid_count !== 1 ? "s" : ""} so far
+              </p>
+            </div>
+          </Card>
+        </div>
+
+        {load.special_instructions && (
+          <Card className="border-orange-200 dark:border-orange-500/20 bg-orange-50 dark:bg-orange-500/5">
+            <p className="text-sm text-orange-700 dark:text-orange-400">
+              <strong>Note:</strong> {load.special_instructions}
+            </p>
+          </Card>
+        )}
+
+        {/* Bid form or existing bid */}
+        {existingBid ? (
+          <Card className="border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/5">
+            <CardTitle className="mb-2">Your Bid</CardTitle>
+            <p className="text-lg font-bold text-gray-900 dark:text-white">{formatNaira(existingBid.amount)}</p>
+            <Badge className={existingBid.status === "accepted" ? "bg-green-100 text-green-800" : existingBid.status === "rejected" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}>
+              {existingBid.status}
+            </Badge>
+            {existingBid.message && (
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{existingBid.message}</p>
+            )}
+          </Card>
+        ) : (load.status === "posted" || load.status === "bidding") ? (
+          <Card>
+            <CardTitle className="mb-3">Place Your Bid</CardTitle>
+            <form onSubmit={handleBid} className="space-y-3">
+              <Input
+                label="Your Price (₦)"
+                type="number"
+                placeholder="Enter amount in Naira"
+                value={bidAmount}
+                onChange={(e) => setBidAmount(e.target.value)}
+                required
+                min={1}
+              />
+              <Input
+                label="Estimated Delivery Time (hours)"
+                type="number"
+                placeholder="e.g. 24"
+                value={estimatedHours}
+                onChange={(e) => setEstimatedHours(e.target.value)}
+              />
+              {vehicles.length > 0 && (
+                <Select
+                  label="Vehicle"
+                  placeholder="Select a vehicle"
+                  value={vehicleId}
+                  onChange={(e) => setVehicleId(e.target.value)}
+                  options={vehicles.map((v: any) => ({
+                    value: v.id,
+                    label: `${v.plate_number} — ${v.vehicle_type} (${v.capacity_kg}kg)`,
+                  }))}
+                />
+              )}
+              <Input
+                label="Message (optional)"
+                placeholder="e.g. I can pick up today"
+                value={bidMessage}
+                onChange={(e) => setBidMessage(e.target.value)}
+              />
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <Button type="submit" loading={bidLoading} className="w-full">
+                <Send className="h-4 w-4 mr-1" /> Submit Bid
+              </Button>
+            </form>
+          </Card>
+        ) : null}
+      </div>
+    </div>
+  );
+}

@@ -6,20 +6,14 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type UserRole = "seller" | "buyer" | "carrier";
-export type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "payment_sent"
-  | "paid"
-  | "preparing"
-  | "shipped"
-  | "delivered"
-  | "cancelled"
-  | "disputed";
-export type DisputeStatus = "open" | "evidence" | "review" | "resolved" | "closed";
+export type UserRole = "shipper" | "carrier" | "seller" | "buyer";
+export type LoadStatus = "draft" | "posted" | "bidding" | "accepted" | "in_transit" | "delivered" | "completed" | "cancelled";
+export type BidStatus = "pending" | "accepted" | "rejected" | "withdrawn";
+export type TripStatus = "pending" | "pickup" | "in_transit" | "delivered" | "confirmed" | "disputed";
+export type CargoType = "general" | "fragile" | "perishable" | "livestock" | "heavy_machinery" | "documents" | "electronics" | "building_materials";
+export type VehicleType = "motorcycle" | "car" | "van" | "pickup_truck" | "box_truck" | "flatbed" | "trailer" | "refrigerated";
+export type TrackingEventType = "status_update" | "location_update" | "note" | "photo" | "issue";
 export type NotificationPriority = "critical" | "normal" | "low";
-export type ConsentZone = "zone_one" | "zone_two" | "zone_three";
 export type VerificationLevel = "phone" | "bvn_nin" | "cac";
 
 export interface Database {
@@ -34,17 +28,29 @@ export interface Database {
           full_name: string;
           avatar_url: string | null;
           verification_level: VerificationLevel;
+          company_name: string | null;
+          state: string | null;
+          city: string | null;
+          fleet_size: number;
+          business_type: string | null;
+          avg_rating: number;
+          total_reviews: number;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id: string;
-          role?: UserRole;
+          role: UserRole;
           phone?: string | null;
           email?: string | null;
           full_name: string;
           avatar_url?: string | null;
           verification_level?: VerificationLevel;
+          company_name?: string | null;
+          state?: string | null;
+          city?: string | null;
+          fleet_size?: number;
+          business_type?: string | null;
         };
         Update: {
           role?: UserRole;
@@ -53,249 +59,300 @@ export interface Database {
           full_name?: string;
           avatar_url?: string | null;
           verification_level?: VerificationLevel;
+          company_name?: string | null;
+          state?: string | null;
+          city?: string | null;
+          fleet_size?: number;
+          business_type?: string | null;
         };
         Relationships: [];
       };
-      businesses: {
+      vehicles: {
         Row: {
           id: string;
           owner_id: string;
-          name: string;
-          slug: string;
-          description: string | null;
-          logo_url: string | null;
-          cover_url: string | null;
-          category: string;
-          address: string | null;
-          city: string | null;
-          state: string | null;
-          latitude: number | null;
-          longitude: number | null;
-          phone: string | null;
-          email: string | null;
-          is_published: boolean;
-          quiet_hours_start: string | null;
-          quiet_hours_end: string | null;
+          vehicle_type: VehicleType;
+          plate_number: string;
+          capacity_kg: number;
+          make: string | null;
+          model: string | null;
+          year: number | null;
+          is_verified: boolean;
+          is_active: boolean;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           owner_id: string;
-          name: string;
-          slug: string;
-          description?: string | null;
-          logo_url?: string | null;
-          cover_url?: string | null;
-          category?: string;
-          address?: string | null;
-          city?: string | null;
-          state?: string | null;
-          latitude?: number | null;
-          longitude?: number | null;
-          phone?: string | null;
-          email?: string | null;
-          is_published?: boolean;
-          quiet_hours_start?: string | null;
-          quiet_hours_end?: string | null;
+          vehicle_type: VehicleType;
+          plate_number: string;
+          capacity_kg: number;
+          make?: string | null;
+          model?: string | null;
+          year?: number | null;
         };
         Update: {
-          name?: string;
-          slug?: string;
-          description?: string | null;
-          logo_url?: string | null;
-          cover_url?: string | null;
-          category?: string;
-          address?: string | null;
-          city?: string | null;
-          state?: string | null;
-          latitude?: number | null;
-          longitude?: number | null;
-          phone?: string;
-          email?: string | null;
-          is_published?: boolean;
-          quiet_hours_start?: string | null;
-          quiet_hours_end?: string | null;
+          vehicle_type?: VehicleType;
+          plate_number?: string;
+          capacity_kg?: number;
+          make?: string | null;
+          model?: string | null;
+          year?: number | null;
+          is_verified?: boolean;
+          is_active?: boolean;
         };
         Relationships: [];
       };
-      products: {
+      loads: {
         Row: {
           id: string;
-          business_id: string;
-          name: string;
-          description: string | null;
-          price: number;
-          compare_at_price: number | null;
+          load_number: string;
+          shipper_id: string;
+          origin_address: string;
+          origin_landmark: string | null;
+          origin_city: string;
+          origin_state: string;
+          origin_lga: string | null;
+          origin_lat: number | null;
+          origin_lng: number | null;
+          destination_address: string;
+          destination_landmark: string | null;
+          destination_city: string;
+          destination_state: string;
+          destination_lga: string | null;
+          destination_lat: number | null;
+          destination_lng: number | null;
+          cargo_type: CargoType;
+          cargo_description: string | null;
+          weight_kg: number | null;
+          quantity: number;
+          special_instructions: string | null;
           images: string[];
-          category: string | null;
-          stock_quantity: number;
-          low_stock_threshold: number;
-          is_published: boolean;
+          budget_amount: number | null;
+          is_negotiable: boolean;
+          pickup_date: string;
+          delivery_date: string | null;
+          status: LoadStatus;
+          bid_count: number;
+          accepted_bid_id: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
-          business_id: string;
-          name: string;
-          description?: string | null;
-          price: number;
-          compare_at_price?: number | null;
+          shipper_id: string;
+          origin_address: string;
+          origin_landmark?: string | null;
+          origin_city: string;
+          origin_state: string;
+          origin_lga?: string | null;
+          origin_lat?: number | null;
+          origin_lng?: number | null;
+          destination_address: string;
+          destination_landmark?: string | null;
+          destination_city: string;
+          destination_state: string;
+          destination_lga?: string | null;
+          destination_lat?: number | null;
+          destination_lng?: number | null;
+          cargo_type?: CargoType;
+          cargo_description?: string | null;
+          weight_kg?: number | null;
+          quantity?: number;
+          special_instructions?: string | null;
           images?: string[];
-          category?: string | null;
-          stock_quantity?: number;
-          low_stock_threshold?: number;
-          is_published?: boolean;
+          budget_amount?: number | null;
+          is_negotiable?: boolean;
+          pickup_date: string;
+          delivery_date?: string | null;
+          status?: LoadStatus;
         };
         Update: {
-          name?: string;
-          description?: string | null;
-          price?: number;
-          compare_at_price?: number | null;
+          origin_address?: string;
+          origin_landmark?: string | null;
+          origin_city?: string;
+          origin_state?: string;
+          origin_lga?: string | null;
+          origin_lat?: number | null;
+          origin_lng?: number | null;
+          destination_address?: string;
+          destination_landmark?: string | null;
+          destination_city?: string;
+          destination_state?: string;
+          destination_lga?: string | null;
+          destination_lat?: number | null;
+          destination_lng?: number | null;
+          cargo_type?: CargoType;
+          cargo_description?: string | null;
+          weight_kg?: number | null;
+          quantity?: number;
+          special_instructions?: string | null;
           images?: string[];
-          category?: string | null;
-          stock_quantity?: number;
-          low_stock_threshold?: number;
-          is_published?: boolean;
+          budget_amount?: number | null;
+          is_negotiable?: boolean;
+          pickup_date?: string;
+          delivery_date?: string | null;
+          status?: LoadStatus;
+          accepted_bid_id?: string | null;
         };
         Relationships: [];
       };
-      orders: {
+      bids: {
         Row: {
           id: string;
-          order_number: string;
-          business_id: string;
-          buyer_id: string | null;
-          buyer_name: string;
-          buyer_phone: string;
-          buyer_email: string | null;
-          delivery_address: string;
-          delivery_city: string | null;
-          delivery_state: string | null;
-          delivery_latitude: number | null;
-          delivery_longitude: number | null;
-          status: OrderStatus;
-          subtotal: number;
-          delivery_fee: number;
-          total: number;
+          load_id: string;
+          carrier_id: string;
+          vehicle_id: string | null;
+          amount: number;
+          estimated_hours: number | null;
+          message: string | null;
+          status: BidStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          load_id: string;
+          carrier_id: string;
+          vehicle_id?: string | null;
+          amount: number;
+          estimated_hours?: number | null;
+          message?: string | null;
+        };
+        Update: {
+          vehicle_id?: string | null;
+          amount?: number;
+          estimated_hours?: number | null;
+          message?: string | null;
+          status?: BidStatus;
+        };
+        Relationships: [];
+      };
+      trips: {
+        Row: {
+          id: string;
+          trip_number: string;
+          load_id: string;
+          carrier_id: string;
+          vehicle_id: string | null;
+          agreed_amount: number;
+          status: TripStatus;
+          started_at: string | null;
+          picked_up_at: string | null;
+          delivered_at: string | null;
+          confirmed_at: string | null;
           payment_reference: string | null;
           paid_at: string | null;
-          confirmed_at: string | null;
-          shipped_at: string | null;
-          delivered_at: string | null;
-          cancelled_at: string | null;
-          cancellation_reason: string | null;
-          notes: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
-          business_id: string;
-          buyer_id?: string | null;
-          buyer_name: string;
-          buyer_phone: string;
-          buyer_email?: string | null;
-          delivery_address: string;
-          delivery_city?: string | null;
-          delivery_state?: string | null;
-          delivery_latitude?: number | null;
-          delivery_longitude?: number | null;
-          status?: OrderStatus;
-          subtotal: number;
-          delivery_fee?: number;
-          total: number;
-          payment_reference?: string | null;
-          notes?: string | null;
+          load_id: string;
+          carrier_id: string;
+          vehicle_id?: string | null;
+          agreed_amount: number;
         };
         Update: {
-          status?: OrderStatus;
-          subtotal?: number;
-          delivery_fee?: number;
-          total?: number;
+          vehicle_id?: string | null;
+          status?: TripStatus;
+          started_at?: string | null;
+          picked_up_at?: string | null;
+          delivered_at?: string | null;
+          confirmed_at?: string | null;
           payment_reference?: string | null;
           paid_at?: string | null;
-          confirmed_at?: string | null;
-          shipped_at?: string | null;
-          delivered_at?: string | null;
-          cancelled_at?: string | null;
-          cancellation_reason?: string | null;
-          notes?: string | null;
         };
         Relationships: [];
       };
-      order_items: {
+      tracking_events: {
         Row: {
           id: string;
-          order_id: string;
-          product_id: string;
-          product_name: string;
-          quantity: number;
-          unit_price: number;
-          total_price: number;
-        };
-        Insert: {
-          order_id: string;
-          product_id: string;
-          product_name: string;
-          quantity: number;
-          unit_price: number;
-          total_price: number;
-        };
-        Update: {
-          quantity?: number;
-          unit_price?: number;
-          total_price?: number;
-        };
-        Relationships: [];
-      };
-      conversations: {
-        Row: {
-          id: string;
-          business_id: string;
-          buyer_identifier: string;
-          buyer_name: string | null;
-          channel: string;
-          last_message: string | null;
-          last_message_at: string | null;
-          is_read: boolean;
+          trip_id: string;
+          event_type: TrackingEventType;
+          description: string | null;
+          latitude: number | null;
+          longitude: number | null;
+          photo_url: string | null;
+          created_by: string | null;
           created_at: string;
         };
         Insert: {
-          business_id: string;
-          buyer_identifier: string;
-          buyer_name?: string | null;
-          channel?: string;
-          last_message?: string | null;
-          last_message_at?: string | null;
-          is_read?: boolean;
+          trip_id: string;
+          event_type?: TrackingEventType;
+          description?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
+          photo_url?: string | null;
+          created_by?: string | null;
         };
         Update: {
-          buyer_name?: string | null;
-          last_message?: string | null;
-          last_message_at?: string | null;
-          is_read?: boolean;
+          description?: string | null;
         };
         Relationships: [];
       };
-      messages: {
+      reviews: {
         Row: {
           id: string;
-          conversation_id: string;
-          sender_type: string;
-          content: string;
-          metadata: Json | null;
-          is_ai_generated: boolean;
+          trip_id: string;
+          reviewer_id: string;
+          reviewee_id: string;
+          rating: number;
+          comment: string | null;
           created_at: string;
         };
         Insert: {
-          conversation_id: string;
-          sender_type: string;
-          content: string;
-          metadata?: Json | null;
-          is_ai_generated?: boolean;
+          trip_id: string;
+          reviewer_id: string;
+          reviewee_id: string;
+          rating: number;
+          comment?: string | null;
         };
         Update: {
-          content?: string;
-          metadata?: Json | null;
+          rating?: number;
+          comment?: string | null;
+        };
+        Relationships: [];
+      };
+      addresses: {
+        Row: {
+          id: string;
+          raw_address: string;
+          parsed_address: string | null;
+          landmark: string | null;
+          city: string;
+          state: string;
+          lga: string | null;
+          latitude: number | null;
+          longitude: number | null;
+          confidence_score: number;
+          delivery_notes: string | null;
+          delivery_count: number;
+          failed_delivery_count: number;
+          contributor_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          raw_address: string;
+          parsed_address?: string | null;
+          landmark?: string | null;
+          city: string;
+          state: string;
+          lga?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
+          confidence_score?: number;
+          delivery_notes?: string | null;
+          contributor_id?: string | null;
+        };
+        Update: {
+          parsed_address?: string | null;
+          landmark?: string | null;
+          lga?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
+          confidence_score?: number;
+          delivery_notes?: string | null;
+          delivery_count?: number;
+          failed_delivery_count?: number;
         };
         Relationships: [];
       };
@@ -323,83 +380,17 @@ export interface Database {
         };
         Relationships: [];
       };
-      disputes: {
-        Row: {
-          id: string;
-          order_id: string;
-          opened_by: string;
-          reason: string;
-          description: string;
-          evidence_urls: string[];
-          status: DisputeStatus;
-          resolution: string | null;
-          resolved_at: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          order_id: string;
-          opened_by: string;
-          reason: string;
-          description: string;
-          evidence_urls?: string[];
-          status?: DisputeStatus;
-        };
-        Update: {
-          status?: DisputeStatus;
-          resolution?: string | null;
-          resolved_at?: string | null;
-          evidence_urls?: string[];
-        };
-        Relationships: [];
-      };
-      addresses: {
-        Row: {
-          id: string;
-          raw_address: string;
-          parsed_address: string | null;
-          landmark: string | null;
-          city: string;
-          state: string;
-          latitude: number | null;
-          longitude: number | null;
-          confidence_score: number;
-          delivery_notes: string | null;
-          delivery_count: number;
-          failed_delivery_count: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          raw_address: string;
-          parsed_address?: string | null;
-          landmark?: string | null;
-          city: string;
-          state: string;
-          latitude?: number | null;
-          longitude?: number | null;
-          confidence_score?: number;
-          delivery_notes?: string | null;
-        };
-        Update: {
-          parsed_address?: string | null;
-          landmark?: string | null;
-          latitude?: number | null;
-          longitude?: number | null;
-          confidence_score?: number;
-          delivery_notes?: string | null;
-          delivery_count?: number;
-          failed_delivery_count?: number;
-        };
-        Relationships: [];
-      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
       user_role: UserRole;
-      order_status: OrderStatus;
-      dispute_status: DisputeStatus;
+      load_status: LoadStatus;
+      bid_status: BidStatus;
+      trip_status: TripStatus;
+      cargo_type: CargoType;
+      vehicle_type: VehicleType;
+      tracking_event_type: TrackingEventType;
       notification_priority: NotificationPriority;
       verification_level: VerificationLevel;
     };

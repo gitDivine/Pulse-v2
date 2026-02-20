@@ -26,47 +26,40 @@ export async function POST(request: NextRequest) {
 
     if (event.event === "charge.success") {
       const { reference, metadata } = event.data;
-      const orderId = metadata?.order_id;
+      const tripId = metadata?.trip_id;
 
-      if (!orderId) {
-        return NextResponse.json({ error: "No order ID in metadata" }, { status: 400 });
+      if (!tripId) {
+        return NextResponse.json({ error: "No trip ID in metadata" }, { status: 400 });
       }
 
       const supabase = await createServiceRoleSupabase();
 
-      // Update order to paid
+      // Update trip as paid
       await supabase
-        .from("orders")
+        .from("trips")
         .update({
-          status: "paid",
           paid_at: new Date().toISOString(),
           payment_reference: reference,
         })
-        .eq("id", orderId);
+        .eq("id", tripId);
 
-      // Notify seller — critical priority (bypasses quiet hours)
-      const { data: order } = await supabase
-        .from("orders")
-        .select("business_id, order_number, total, buyer_name")
-        .eq("id", orderId)
+      // Get trip details for notification
+      const { data: trip } = await supabase
+        .from("trips")
+        .select("carrier_id, trip_number, agreed_amount, loads(shipper_id, load_number)")
+        .eq("id", tripId)
         .single();
 
-      if (order) {
-        const { data: business } = await supabase
-          .from("businesses")
-          .select("owner_id")
-          .eq("id", order.business_id)
-          .single();
-
-        if (business) {
-          await supabase.from("notifications").insert({
-            user_id: business.owner_id,
-            title: "Payment received",
-            body: `${order.buyer_name} paid for order ${order.order_number}. Please confirm the order.`,
-            priority: "critical",
-            action_url: "/dashboard/orders",
-          });
-        }
+      const t = trip as any;
+      if (t) {
+        // Notify carrier of payment
+        await supabase.from("notifications").insert({
+          user_id: t.carrier_id,
+          title: "Payment received",
+          body: `Payment of ${t.agreed_amount / 100} naira received for trip ${t.trip_number}.`,
+          priority: "critical",
+          action_url: `/carrier/earnings`,
+        });
       }
     }
 

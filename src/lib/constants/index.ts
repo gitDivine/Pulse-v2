@@ -1,5 +1,5 @@
 export const APP_NAME = "PULSE";
-export const APP_TAGLINE = "Africa's Commerce Nervous System";
+export const APP_TAGLINE = "Africa's Logistics Nervous System";
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 export const NIGERIAN_STATES = [
@@ -10,35 +10,57 @@ export const NIGERIAN_STATES = [
   "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara",
 ] as const;
 
-export const BUSINESS_CATEGORIES = [
-  "Fashion & Clothing",
-  "Food & Beverages",
-  "Electronics & Gadgets",
-  "Beauty & Skincare",
-  "Home & Furniture",
-  "Health & Pharmacy",
-  "Agriculture & Farm Produce",
-  "Building & Construction",
-  "Auto Parts & Accessories",
-  "Books & Stationery",
-  "Fabric & Textiles",
-  "General Merchandise",
+export const CARGO_TYPES = [
+  { value: "general", label: "General Cargo" },
+  { value: "fragile", label: "Fragile Items" },
+  { value: "perishable", label: "Perishable Goods" },
+  { value: "livestock", label: "Livestock" },
+  { value: "heavy_machinery", label: "Heavy Machinery" },
+  { value: "documents", label: "Documents" },
+  { value: "electronics", label: "Electronics" },
+  { value: "building_materials", label: "Building Materials" },
 ] as const;
+
+export const VEHICLE_TYPES = [
+  { value: "motorcycle", label: "Motorcycle", icon: "🏍️" },
+  { value: "car", label: "Car", icon: "🚗" },
+  { value: "van", label: "Van", icon: "🚐" },
+  { value: "pickup_truck", label: "Pickup Truck", icon: "🛻" },
+  { value: "box_truck", label: "Box Truck", icon: "📦" },
+  { value: "flatbed", label: "Flatbed", icon: "🚛" },
+  { value: "trailer", label: "Trailer", icon: "🚚" },
+  { value: "refrigerated", label: "Refrigerated", icon: "❄️" },
+] as const;
+
+export const LOAD_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  draft: { label: "Draft", color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
+  posted: { label: "Posted", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  bidding: { label: "Bidding", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
+  accepted: { label: "Accepted", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
+  in_transit: { label: "In Transit", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400" },
+  delivered: { label: "Delivered", color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" },
+  completed: { label: "Completed", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+  cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+};
+
+export const BID_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
+  accepted: { label: "Accepted", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+  rejected: { label: "Rejected", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  withdrawn: { label: "Withdrawn", color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
+};
+
+export const TRIP_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  pending: { label: "Pending Pickup", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
+  pickup: { label: "At Pickup", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  in_transit: { label: "In Transit", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400" },
+  delivered: { label: "Delivered", color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" },
+  confirmed: { label: "Confirmed", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+  disputed: { label: "Disputed", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+};
 
 export const NOTIFICATION_PRIORITIES = {
   critical: { label: "Critical", respectsQuietHours: false },
   normal: { label: "Normal", respectsQuietHours: true },
   low: { label: "Low", respectsQuietHours: true },
 } as const;
-
-export const ORDER_STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800" },
-  confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-800" },
-  payment_sent: { label: "Payment Sent", color: "bg-purple-100 text-purple-800" },
-  paid: { label: "Paid", color: "bg-green-100 text-green-800" },
-  preparing: { label: "Preparing", color: "bg-indigo-100 text-indigo-800" },
-  shipped: { label: "Shipped", color: "bg-cyan-100 text-cyan-800" },
-  delivered: { label: "Delivered", color: "bg-emerald-100 text-emerald-800" },
-  cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800" },
-  disputed: { label: "Disputed", color: "bg-orange-100 text-orange-800" },
-};

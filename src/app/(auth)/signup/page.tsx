@@ -43,9 +43,9 @@ export default function SignupPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-900">Create your account</h2>
-      <p className="mt-2 text-sm text-gray-600">
-        Start managing your business on PULSE
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Create your account</h2>
+      <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        Join PULSE — ship or transport goods across Nigeria
       </p>
 
       <form onSubmit={handleSignup} className="mt-8 space-y-4">

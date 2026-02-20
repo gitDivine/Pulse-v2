@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PULSE — Africa's Commerce Nervous System",
+  title: "PULSE — Africa's Logistics Nervous System",
   description:
-    "One platform to manage your orders, inventory, payments, customer communication, and logistics. Built for how African businesses actually work.",
+    "Move anything, anywhere in Nigeria. Post loads, find carriers, track deliveries in real-time. Built for African logistics.",
 };
 
 export default function RootLayout({

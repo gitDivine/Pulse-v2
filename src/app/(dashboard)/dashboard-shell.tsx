@@ -7,18 +7,19 @@ import { X, Menu } from "lucide-react";
 
 interface DashboardShellProps {
   children: React.ReactNode;
-  businessName: string;
-  businessSlug: string;
+  userName: string;
+  companyName?: string;
+  role: "shipper" | "carrier";
 }
 
-export function DashboardShell({ children, businessName, businessSlug }: DashboardShellProps) {
+export function DashboardShell({ children, userName, companyName, role }: DashboardShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-[#0a0a0a]">
       {/* Desktop sidebar */}
       <div className="hidden lg:block">
-        <Sidebar businessName={businessName} businessSlug={businessSlug} />
+        <Sidebar userName={userName} companyName={companyName} role={role} />
       </div>
 
       {/* Mobile menu button */}
@@ -48,7 +49,7 @@ export function DashboardShell({ children, businessName, businessSlug }: Dashboa
               transition={{ type: "spring", stiffness: 400, damping: 35 }}
               className="fixed left-0 top-0 h-full"
             >
-              <Sidebar businessName={businessName} businessSlug={businessSlug} />
+              <Sidebar userName={userName} companyName={companyName} role={role} />
             </motion.div>
             <motion.button
               initial={{ opacity: 0, scale: 0.8 }}

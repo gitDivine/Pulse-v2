@@ -38,7 +38,12 @@ export default function LoginPage() {
         .single();
 
       if (profile) {
-        router.push("/dashboard");
+        const { data: fullProfile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        router.push(fullProfile?.role === "carrier" ? "/carrier/dashboard" : "/shipper/dashboard");
       } else {
         router.push("/onboarding");
       }
@@ -52,9 +57,9 @@ export default function LoginPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-      <p className="mt-2 text-sm text-gray-600">
-        Log in to your PULSE account
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome back</h2>
+      <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        Log in to your PULSE logistics account
       </p>
 
       <form onSubmit={handleLogin} className="mt-8 space-y-4">

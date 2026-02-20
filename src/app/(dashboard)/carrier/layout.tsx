@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { DashboardShell } from "../dashboard-shell";
 
-export default async function DashboardLayout({
+export default async function CarrierLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -13,11 +14,20 @@ export default async function DashboardLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, role")
+    .select("full_name, company_name, role")
     .eq("id", user.id)
     .single();
 
   if (!profile) redirect("/onboarding");
+  if (profile.role !== "carrier") redirect("/shipper/dashboard");
 
-  return <>{children}</>;
+  return (
+    <DashboardShell
+      userName={profile.full_name}
+      companyName={profile.company_name ?? undefined}
+      role="carrier"
+    >
+      {children}
+    </DashboardShell>
+  );
 }

@@ -1,0 +1,293 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
+import { Topbar } from "@/components/dashboard/topbar";
+import { Card, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { formatNaira, timeAgo, formatWeight, formatDuration } from "@/lib/utils/format";
+import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
+import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck } from "lucide-react";
+
+export default function LoadDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [load, setLoad] = useState<any>(null);
+  const [bids, setBids] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function fetchData() {
+      const [loadRes, bidsRes] = await Promise.all([
+        fetch(`/api/loads/${id}`),
+        fetch(`/api/loads/${id}/bids`),
+      ]);
+      const loadData = await loadRes.json();
+      const bidsData = await bidsRes.json();
+      setLoad(loadData.load);
+      setBids(bidsData.bids || []);
+      setLoading(false);
+    }
+    fetchData();
+  }, [id]);
+
+  async function handleBidAction(bidId: string, status: "accepted" | "rejected") {
+    setActionLoading(bidId);
+    try {
+      const res = await fetch(`/api/loads/${id}/bids/${bidId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (status === "accepted" && data.trip) {
+          router.push(`/shipper/loads/${id}`);
+        }
+        // Refresh data
+        const [loadRes, bidsRes] = await Promise.all([
+          fetch(`/api/loads/${id}`),
+          fetch(`/api/loads/${id}/bids`),
+        ]);
+        setLoad((await loadRes.json()).load);
+        setBids((await bidsRes.json()).bids || []);
+      }
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleConfirmDelivery() {
+    setActionLoading("confirm");
+    try {
+      // Find the trip for this load
+      const { data: trips } = await supabase
+        .from("trips")
+        .select("id")
+        .eq("load_id", id)
+        .single();
+
+      if (trips) {
+        await fetch(`/api/trips/${trips.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "confirmed" }),
+        });
+        // Refresh
+        const loadRes = await fetch(`/api/loads/${id}`);
+        setLoad((await loadRes.json()).load);
+      }
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div>
+        <Topbar title="Load Detail" />
+        <div className="p-6 space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!load) {
+    return (
+      <div>
+        <Topbar title="Load Detail" />
+        <div className="p-6 text-center py-12">
+          <p className="text-gray-500">Load not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  const statusInfo = LOAD_STATUS_LABELS[load.status] || { label: load.status, color: "bg-gray-100 text-gray-800" };
+  const cargoLabel = CARGO_TYPES.find((c) => c.value === load.cargo_type)?.label || load.cargo_type;
+
+  return (
+    <div>
+      <Topbar title={load.load_number} />
+
+      <div className="p-6 space-y-4 max-w-3xl">
+        {/* Status + Route */}
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo(load.created_at)}</span>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="flex flex-col items-center gap-1">
+              <div className="h-3 w-3 rounded-full border-2 border-orange-500 bg-white dark:bg-[#111]" />
+              <div className="w-0.5 h-8 bg-gray-200 dark:bg-gray-700" />
+              <div className="h-3 w-3 rounded-full bg-orange-500" />
+            </div>
+            <div className="flex-1 space-y-4">
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{load.origin_address}</p>
+                <p className="text-xs text-gray-500">{load.origin_city}, {load.origin_state}</p>
+                {load.origin_landmark && <p className="text-xs text-gray-400">Near: {load.origin_landmark}</p>}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{load.destination_address}</p>
+                <p className="text-xs text-gray-500">{load.destination_city}, {load.destination_state}</p>
+                {load.destination_landmark && <p className="text-xs text-gray-400">Near: {load.destination_landmark}</p>}
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Cargo Details */}
+        <Card>
+          <CardTitle className="mb-3">Cargo Details</CardTitle>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-gray-500 dark:text-gray-400">Type</p>
+              <p className="font-medium text-gray-900 dark:text-white">{cargoLabel}</p>
+            </div>
+            {load.weight_kg && (
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Weight</p>
+                <p className="font-medium text-gray-900 dark:text-white">{formatWeight(load.weight_kg)}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-gray-500 dark:text-gray-400">Quantity</p>
+              <p className="font-medium text-gray-900 dark:text-white">{load.quantity}</p>
+            </div>
+            {load.budget_amount && (
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Budget</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {formatNaira(load.budget_amount)} {load.is_negotiable && "(negotiable)"}
+                </p>
+              </div>
+            )}
+          </div>
+          {load.cargo_description && (
+            <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{load.cargo_description}</p>
+          )}
+          {load.special_instructions && (
+            <p className="mt-2 text-sm text-orange-600 dark:text-orange-400">
+              Note: {load.special_instructions}
+            </p>
+          )}
+        </Card>
+
+        {/* Confirm delivery button */}
+        {load.status === "delivered" && (
+          <Card className="border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/5">
+            <div className="flex items-center gap-3">
+              <Truck className="h-8 w-8 text-emerald-600" />
+              <div className="flex-1">
+                <p className="font-medium text-emerald-800 dark:text-emerald-400">
+                  Carrier reports delivery complete
+                </p>
+                <p className="text-sm text-emerald-600 dark:text-emerald-500">
+                  Please confirm you received your goods.
+                </p>
+              </div>
+              <Button
+                onClick={handleConfirmDelivery}
+                loading={actionLoading === "confirm"}
+                className="bg-emerald-600 hover:bg-emerald-700"
+              >
+                <CheckCircle className="h-4 w-4 mr-1" /> Confirm
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {/* Bids */}
+        <Card>
+          <CardTitle className="mb-3">
+            Bids ({bids.length})
+          </CardTitle>
+
+          {bids.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
+              No bids yet. Carriers will start bidding soon.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {bids.map((bid, i) => {
+                const bidStatus = BID_STATUS_LABELS[bid.status] || { label: bid.status, color: "bg-gray-100 text-gray-800" };
+                const carrier = bid.profiles;
+                return (
+                  <motion.div
+                    key={bid.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="rounded-xl border border-gray-200 dark:border-white/10 p-4"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {carrier?.company_name || carrier?.full_name || "Unknown Carrier"}
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {carrier?.avg_rating > 0 && (
+                            <span className="flex items-center gap-0.5 text-xs text-yellow-600">
+                              <Star className="h-3 w-3 fill-current" />
+                              {carrier.avg_rating.toFixed(1)}
+                            </span>
+                          )}
+                          {bid.estimated_hours && (
+                            <span className="flex items-center gap-0.5 text-xs text-gray-500">
+                              <Clock className="h-3 w-3" />
+                              {formatDuration(bid.estimated_hours)}
+                            </span>
+                          )}
+                        </div>
+                        {bid.message && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{bid.message}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">{formatNaira(bid.amount)}</p>
+                        <Badge className={bidStatus.color}>{bidStatus.label}</Badge>
+                      </div>
+                    </div>
+
+                    {bid.status === "pending" && load.status !== "accepted" && load.status !== "completed" && (
+                      <div className="flex gap-2 mt-3">
+                        <Button
+                          size="sm"
+                          onClick={() => handleBidAction(bid.id, "accepted")}
+                          loading={actionLoading === bid.id}
+                          className="flex-1"
+                        >
+                          Accept Bid
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleBidAction(bid.id, "rejected")}
+                          loading={actionLoading === bid.id}
+                          className="flex-1"
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+}

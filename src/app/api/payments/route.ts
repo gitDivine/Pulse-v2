@@ -1,29 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleSupabase } from "@/lib/supabase/server";
-import crypto from "crypto";
 
-// Initialize Paystack payment for an order
+// Initialize Paystack payment for a trip
 export async function POST(request: NextRequest) {
   try {
-    const { orderId } = await request.json();
-    if (!orderId) {
-      return NextResponse.json({ error: "Missing order ID" }, { status: 400 });
+    const { tripId } = await request.json();
+    if (!tripId) {
+      return NextResponse.json({ error: "Missing trip ID" }, { status: 400 });
     }
 
     const supabase = await createServiceRoleSupabase();
 
-    const { data: order } = await supabase
-      .from("orders")
-      .select("id, order_number, total, buyer_email, buyer_phone, buyer_name, status")
-      .eq("id", orderId)
+    const { data: trip } = await supabase
+      .from("trips")
+      .select(`
+        id, trip_number, agreed_amount, status, carrier_id,
+        loads(shipper_id, load_number)
+      `)
+      .eq("id", tripId)
       .single();
 
-    if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    if (!trip) {
+      return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
-    if (order.status !== "payment_sent") {
-      return NextResponse.json({ error: "Order is not ready for payment" }, { status: 400 });
+    const t = trip as any;
+    if (t.status !== "confirmed") {
+      return NextResponse.json({ error: "Trip must be confirmed before payment" }, { status: 400 });
     }
 
     const paystackKey = process.env.PAYSTACK_SECRET_KEY;
@@ -31,7 +34,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Payment not configured" }, { status: 500 });
     }
 
-    // Initialize transaction
+    // Get shipper email for payment
+    const load = t.loads as any;
+    const { data: shipper } = await supabase
+      .from("profiles")
+      .select("email, phone, full_name")
+      .eq("id", load.shipper_id)
+      .single();
+
     const res = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST",
       headers: {
@@ -39,14 +49,14 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: order.total, // Already in kobo
-        email: order.buyer_email || `${order.buyer_phone}@pulse.ng`,
-        reference: `PLS-${order.order_number}-${Date.now()}`,
-        callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/verify`,
+        amount: t.agreed_amount, // Already in kobo
+        email: shipper?.email || `${shipper?.phone}@pulse.ng`,
+        reference: `PLS-${t.trip_number}-${Date.now()}`,
+        callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/shipper/dashboard`,
         metadata: {
-          order_id: order.id,
-          order_number: order.order_number,
-          buyer_name: order.buyer_name,
+          trip_id: t.id,
+          trip_number: t.trip_number,
+          carrier_id: t.carrier_id,
         },
       }),
     });
@@ -57,11 +67,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to initialize payment" }, { status: 500 });
     }
 
-    // Store reference
     await supabase
-      .from("orders")
+      .from("trips")
       .update({ payment_reference: data.data.reference })
-      .eq("id", order.id);
+      .eq("id", t.id);
 
     return NextResponse.json({
       authorization_url: data.data.authorization_url,

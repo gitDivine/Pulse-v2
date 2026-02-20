@@ -6,38 +6,49 @@ import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Package,
-  ShoppingCart,
-  MessageSquare,
+  Truck,
+  Search,
+  MapPin,
   Settings,
-  BarChart3,
   LogOut,
-  Store,
   Sun,
   Moon,
+  PlusCircle,
+  Wallet,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/theme-provider";
 
-const navItems = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/products", label: "Products", icon: Package },
-  { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/dashboard/inbox", label: "Inbox", icon: MessageSquare },
-  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+const shipperNavItems = [
+  { href: "/shipper/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/shipper/post-load", label: "Post a Load", icon: PlusCircle },
+  { href: "/shipper/loads", label: "My Loads", icon: Package },
+  { href: "/shipper/settings", label: "Settings", icon: Settings },
+];
+
+const carrierNavItems = [
+  { href: "/carrier/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/carrier/load-board", label: "Load Board", icon: Search },
+  { href: "/carrier/trips", label: "My Trips", icon: MapPin },
+  { href: "/carrier/vehicles", label: "Vehicles", icon: Truck },
+  { href: "/carrier/earnings", label: "Earnings", icon: Wallet },
+  { href: "/carrier/settings", label: "Settings", icon: Settings },
 ];
 
 interface SidebarProps {
-  businessName: string;
-  businessSlug: string;
+  userName: string;
+  companyName?: string;
+  role: "shipper" | "carrier";
 }
 
-export function Sidebar({ businessName, businessSlug }: SidebarProps) {
+export function Sidebar({ userName, companyName, role }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
   const { theme, toggleTheme } = useTheme();
+
+  const navItems = role === "shipper" ? shipperNavItems : carrierNavItems;
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -50,29 +61,24 @@ export function Sidebar({ businessName, businessSlug }: SidebarProps) {
       <div className="flex items-center gap-2 border-b border-gray-200 dark:border-white/5 px-6 py-4">
         <span className="text-xl font-bold gradient-text">PULSE</span>
         <span className="rounded-full bg-orange-100 dark:bg-orange-500/10 px-2 py-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
-          Flow
+          {role === "shipper" ? "Ship" : "Haul"}
         </span>
       </div>
 
-      {/* Business name */}
+      {/* User info */}
       <div className="border-b border-gray-200 dark:border-white/5 px-6 py-3">
-        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{businessName}</p>
-        <Link
-          href={`/store/${businessSlug}`}
-          target="_blank"
-          className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-orange-600 transition-colors"
-        >
-          <Store className="h-3 w-3" />
-          View storefront
-        </Link>
+        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+          {companyName || userName}
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{role}</p>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.map((item) => {
           const isActive =
-            item.href === "/dashboard"
-              ? pathname === "/dashboard"
+            item.href === `/${role}/dashboard`
+              ? pathname === `/${role}/dashboard`
               : pathname.startsWith(item.href);
           const Icon = item.icon;
 

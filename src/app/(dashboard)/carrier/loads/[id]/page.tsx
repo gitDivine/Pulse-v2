@@ -58,7 +58,12 @@ export default function CarrierLoadDetailPage() {
         .neq("status", "withdrawn")
         .single();
 
-      if (bids) setExistingBid(bids);
+      if (bids) {
+        setExistingBid(bids);
+      } else if (loadData.load?.budget_amount) {
+        // Pre-fill bid amount with shipper's budget (kobo → naira)
+        setBidAmount(String(loadData.load.budget_amount / 100));
+      }
       setLoading(false);
     }
     fetchData();
@@ -106,7 +111,7 @@ export default function CarrierLoadDetailPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to withdraw bid");
       setExistingBid(null);
-      setBidAmount("");
+      setBidAmount(load?.budget_amount ? String(load.budget_amount / 100) : "");
       setBidMessage("");
       setEstimatedHours("");
       setVehicleId("");
@@ -292,15 +297,24 @@ export default function CarrierLoadDetailPage() {
           <Card>
             <CardTitle className="mb-3">Place Your Bid</CardTitle>
             <form onSubmit={handleBid} className="space-y-3">
-              <Input
-                label="Your Price (₦)"
-                type="number"
-                placeholder="Enter amount in Naira"
-                value={bidAmount}
-                onChange={(e) => setBidAmount(e.target.value)}
-                required
-                min={1}
-              />
+              <div>
+                <Input
+                  label="Your Price (₦)"
+                  type="number"
+                  placeholder="Enter amount in Naira"
+                  value={bidAmount}
+                  onChange={(e) => setBidAmount(e.target.value)}
+                  required
+                  min={1}
+                />
+                {load.budget_amount && (
+                  <p className={`text-xs mt-1 ${load.is_negotiable ? "text-gray-400 dark:text-gray-500" : "text-orange-600 dark:text-orange-400"}`}>
+                    {load.is_negotiable
+                      ? `Shipper's budget: ${formatNaira(load.budget_amount)} (negotiable)`
+                      : `Shipper's fixed price: ${formatNaira(load.budget_amount)}`}
+                  </p>
+                )}
+              </div>
               <Input
                 label="Estimated Delivery Time (hours)"
                 type="number"

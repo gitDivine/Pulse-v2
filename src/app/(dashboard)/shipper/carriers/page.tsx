@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Card } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import { useToast } from "@/components/ui/toast";
 import { NIGERIAN_STATES, VEHICLE_TYPES, RATING_OPTIONS, VERIFICATION_LABELS } from "@/lib/constants";
 import {
   Star, Heart, MapPin, Truck, Shield, Search,
-  ChevronLeft, ChevronRight, Send, X, Users,
+  ChevronLeft, ChevronRight, Send, X, Users, Check,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -20,6 +21,8 @@ const PAGE_SIZE = 20;
 
 export default function CarrierDirectoryPage() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const preselectedLoadId = searchParams.get("load_id");
 
   // Carrier list state
   const [carriers, setCarriers] = useState<any[]>([]);
@@ -43,7 +46,7 @@ export default function CarrierDirectoryPage() {
   const [inviteCarrier, setInviteCarrier] = useState<any | null>(null);
   const [myLoads, setMyLoads] = useState<any[]>([]);
   const [loadsLoading, setLoadsLoading] = useState(false);
-  const [selectedLoadId, setSelectedLoadId] = useState("");
+  const [selectedLoadIds, setSelectedLoadIds] = useState<Set<string>>(new Set());
   const [inviting, setInviting] = useState(false);
 
   // Search debounce
@@ -134,16 +137,13 @@ export default function CarrierDirectoryPage() {
 
   async function openInviteModal(carrier: any) {
     setInviteCarrier(carrier);
-    setSelectedLoadId("");
+    setSelectedLoadIds(preselectedLoadId ? new Set([preselectedLoadId]) : new Set());
     setLoadsLoading(true);
 
     try {
-      const res = await fetch("/api/loads?status=posted&limit=50");
+      const res = await fetch("/api/loads?status=posted,bidding&limit=50");
       const data = await res.json();
-      // Also fetch bidding loads
-      const res2 = await fetch("/api/loads?status=bidding&limit=50");
-      const data2 = await res2.json();
-      setMyLoads([...(data.loads || []), ...(data2.loads || [])]);
+      setMyLoads(data.loads || []);
     } catch {
       setMyLoads([]);
     } finally {
@@ -151,26 +151,51 @@ export default function CarrierDirectoryPage() {
     }
   }
 
+  function toggleLoadSelection(loadId: string) {
+    setSelectedLoadIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(loadId)) next.delete(loadId);
+      else next.add(loadId);
+      return next;
+    });
+  }
+
   async function sendInvitation() {
-    if (!inviteCarrier || !selectedLoadId) return;
+    if (!inviteCarrier || selectedLoadIds.size === 0) return;
     setInviting(true);
 
-    try {
-      const res = await fetch("/api/bid-invitations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ load_id: selectedLoadId, carrier_id: inviteCarrier.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to send invitation");
+    const loadIds = Array.from(selectedLoadIds);
+    let sent = 0;
+    let errors: string[] = [];
 
-      toast(`Invitation sent to ${inviteCarrier.company_name || inviteCarrier.full_name}`, "success");
-      setInviteCarrier(null);
-    } catch (err: any) {
-      toast(err.message || "Failed to send invitation", "error");
-    } finally {
-      setInviting(false);
+    for (const loadId of loadIds) {
+      try {
+        const res = await fetch("/api/bid-invitations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ load_id: loadId, carrier_id: inviteCarrier.id }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errors.push(data.error || "Failed");
+        } else {
+          sent++;
+        }
+      } catch {
+        errors.push("Network error");
+      }
     }
+
+    const carrierName = inviteCarrier.company_name || inviteCarrier.full_name;
+    if (sent > 0) {
+      toast(`${sent} invitation${sent > 1 ? "s" : ""} sent to ${carrierName}`, "success");
+    }
+    if (errors.length > 0) {
+      toast(`${errors.length} failed: ${errors[0]}`, "error");
+    }
+
+    setInviteCarrier(null);
+    setInviting(false);
   }
 
   const offset = page * PAGE_SIZE;
@@ -412,7 +437,7 @@ export default function CarrierDirectoryPage() {
                 Invite {inviteCarrier.company_name || inviteCarrier.full_name}
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Select a load to invite this carrier to bid on.
+                Select one or more loads to invite this carrier to bid on.
               </p>
 
               {loadsLoading ? (
@@ -426,25 +451,47 @@ export default function CarrierDirectoryPage() {
                 </div>
               ) : (
                 <>
-                  <Select
-                    label="Select Load"
-                    value={selectedLoadId}
-                    onChange={(e) => setSelectedLoadId(e.target.value)}
-                    options={[
-                      { value: "", label: "Choose a load..." },
-                      ...myLoads.map((l: any) => ({
-                        value: l.id,
-                        label: `${l.load_number || "Load"} — ${l.origin_city} → ${l.destination_city}`,
-                      })),
-                    ]}
-                  />
+                  <div className="max-h-[240px] overflow-y-auto space-y-1.5 -mx-1 px-1">
+                    {myLoads.map((l: any) => {
+                      const isSelected = selectedLoadIds.has(l.id);
+                      return (
+                        <button
+                          key={l.id}
+                          type="button"
+                          onClick={() => toggleLoadSelection(l.id)}
+                          className={`w-full flex items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+                            isSelected
+                              ? "bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20"
+                              : "bg-gray-50 dark:bg-white/5 border border-transparent hover:bg-gray-100 dark:hover:bg-white/10"
+                          }`}
+                        >
+                          <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+                            isSelected
+                              ? "bg-orange-500 border-orange-500"
+                              : "border-gray-300 dark:border-gray-600"
+                          }`}>
+                            {isSelected && <Check className="h-3 w-3 text-white" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {l.origin_city} → {l.destination_city}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {l.load_number} · {l.cargo_type} {l.budget_amount ? `· ₦${(l.budget_amount / 100).toLocaleString()}` : ""}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                   <Button
                     className="w-full mt-4"
-                    disabled={!selectedLoadId}
+                    disabled={selectedLoadIds.size === 0}
                     loading={inviting}
                     onClick={sendInvitation}
                   >
-                    <Send className="h-4 w-4 mr-1" /> Send Invitation
+                    <Send className="h-4 w-4 mr-1" />
+                    {selectedLoadIds.size <= 1 ? "Send Invitation" : `Send ${selectedLoadIds.size} Invitations`}
                   </Button>
                 </>
               )}

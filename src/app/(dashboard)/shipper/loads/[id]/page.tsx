@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatNaira, timeAgo, formatWeight, formatDuration } from "@/lib/utils/format";
 import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCircle } from "lucide-react";
+import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCircle, Users } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import Link from "next/link";
 
@@ -172,11 +172,20 @@ export default function LoadDetailPage() {
               <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
               <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo(load.created_at)}</span>
             </div>
-            <Link href={`/shipper/post-load?${duplicateParams}`}>
-              <Button size="sm" variant="outline">
-                <Copy className="h-3.5 w-3.5 mr-1" /> Post Again
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              {(load.status === "posted" || load.status === "bidding") && (
+                <Link href={`/shipper/carriers?load_id=${id}`}>
+                  <Button size="sm" variant="outline">
+                    <Users className="h-3.5 w-3.5 mr-1" /> Invite Carriers
+                  </Button>
+                </Link>
+              )}
+              <Link href={`/shipper/post-load?${duplicateParams}`}>
+                <Button size="sm" variant="outline">
+                  <Copy className="h-3.5 w-3.5 mr-1" /> Post Again
+                </Button>
+              </Link>
+            </div>
           </div>
 
           <div className="flex items-start gap-3">

@@ -22,6 +22,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json({ error: "Server misconfigured: missing service role key" }, { status: 500 });
+    }
+
     // Use service role for cross-table operations
     const serviceSupabase = await createServiceRoleSupabase();
 
@@ -98,7 +102,9 @@ export async function PATCH(
     }).then(() => {});
 
     return NextResponse.json({ bid });
-  } catch {
-    return NextResponse.json({ error: "Failed to update bid" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Accept bid error:", message);
+    return NextResponse.json({ error: `Failed to update bid: ${message}` }, { status: 500 });
   }
 }

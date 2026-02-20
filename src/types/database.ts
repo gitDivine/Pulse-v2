@@ -16,6 +16,8 @@ export type TrackingEventType = "status_update" | "location_update" | "note" | "
 export type NotificationPriority = "critical" | "normal" | "low";
 export type VerificationLevel = "phone" | "bvn_nin" | "cac";
 export type InvitationStatus = "pending" | "viewed" | "bid_placed" | "expired";
+export type DisputeType = "damaged_goods" | "missing_items" | "wrong_items" | "late_delivery" | "not_received" | "overcharge" | "other";
+export type DisputeStatus = "open" | "carrier_responded" | "resolved" | "escalated";
 
 export interface Database {
   public: {
@@ -392,6 +394,40 @@ export interface Database {
         };
         Relationships: [];
       };
+      disputes: {
+        Row: {
+          id: string;
+          trip_id: string;
+          load_id: string;
+          filed_by: string;
+          type: DisputeType;
+          description: string;
+          evidence_urls: string[];
+          status: DisputeStatus;
+          carrier_response: string | null;
+          resolution_note: string | null;
+          resolved_by: string | null;
+          resolved_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          trip_id: string;
+          load_id: string;
+          filed_by: string;
+          type: DisputeType;
+          description: string;
+          evidence_urls?: string[];
+        };
+        Update: {
+          status?: DisputeStatus;
+          carrier_response?: string | null;
+          resolution_note?: string | null;
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+        };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           id: string;
@@ -430,6 +466,8 @@ export interface Database {
       notification_priority: NotificationPriority;
       verification_level: VerificationLevel;
       invitation_status: InvitationStatus;
+      dispute_type: DisputeType;
+      dispute_status: DisputeStatus;
     };
     CompositeTypes: Record<string, never>;
   };

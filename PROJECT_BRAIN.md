@@ -169,3 +169,17 @@ PULSE is Africa's Logistics Nervous System — a two-sided freight marketplace c
 - **My Bids page**: new `/carrier/bids` page with filter pills (All/Pending/Accepted/Rejected/Withdrawn), bid cards with load route, amount, status badge, shipper info
 - Added GET /api/bids for fetching carrier's bids with load details
 - Added "My Bids" (Gavel icon) to carrier sidebar between Load Board and My Trips
+
+### Session 9 — 2026-02-20 (continued)
+- Built **Dispute Resolution** system for handling delivery issues
+- Created 007_disputes.sql: disputes table, dispute_type + dispute_status enums, RLS policies, trigger to auto-set trip to 'disputed', dispute-evidence storage bucket
+- Added DisputeType, DisputeStatus types to database.ts, DISPUTE_TYPES and DISPUTE_STATUS_LABELS to constants
+- Created 4 API endpoints: GET+POST /api/disputes (list + file), GET+PATCH /api/disputes/[id] (detail + respond/resolve/escalate), POST /api/disputes/upload (evidence photos)
+- Updated shipper load detail page: "Confirm Delivery" now shows alongside "Report Issue" button for delivered loads. Report Issue opens dispute form with issue type selector, description textarea, evidence photo upload (up to 5 photos, 5MB each). Active disputes show status, carrier response, and actions (resolve/escalate)
+- Updated carrier trip detail page: shows dispute card with type, description, evidence photos, and response form. Carrier can write a response which notifies the shipper
+- Dispute flow: shipper files → trip status → 'disputed', payment blocked → carrier responds → shipper resolves (trip → confirmed, load → completed) or escalates
+- Notifications sent at every step: dispute filed (to carrier), carrier responded (to shipper), resolved/escalated (to carrier)
+- Tracking events logged for all dispute actions
+- Build passes: 0 errors, all routes clean
+- **What's pending**: Run 007_disputes.sql in Supabase, test dispute flow end-to-end
+- **Next steps**: Run migration → test: deliver load → shipper reports issue → carrier responds → shipper resolves or escalates

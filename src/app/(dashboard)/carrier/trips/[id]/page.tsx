@@ -8,8 +8,9 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatNaira, timeAgo } from "@/lib/utils/format";
-import { TRIP_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, Truck, CheckCircle, ArrowRight, Clock } from "lucide-react";
+import { TRIP_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISPUTE_STATUS_LABELS } from "@/lib/constants";
+import { useToast } from "@/components/ui/toast";
+import { MapPin, Truck, CheckCircle, ArrowRight, Clock, ShieldAlert, MessageSquare, Send } from "lucide-react";
 
 const TRIP_FLOW = ["pending", "pickup", "in_transit", "delivered", "confirmed"];
 
@@ -19,6 +20,10 @@ export default function TripDetailPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [dispute, setDispute] = useState<any>(null);
+  const [responseText, setResponseText] = useState("");
+  const [respondLoading, setRespondLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchData() {
@@ -31,6 +36,13 @@ export default function TripDetailPage() {
       setTrip(tripData.trip);
       setEvents(eventsData.events || []);
       setLoading(false);
+
+      // Check for dispute
+      const disputeRes = await fetch(`/api/disputes?trip_id=${id}`);
+      const disputeData = await disputeRes.json();
+      if (disputeData.disputes?.length > 0) {
+        setDispute(disputeData.disputes[0]);
+      }
     }
     fetchData();
   }, [id]);
@@ -52,6 +64,30 @@ export default function TripDetailPage() {
       }
     } finally {
       setActionLoading(false);
+    }
+  }
+
+  async function handleRespondToDispute() {
+    if (!dispute || !responseText.trim()) {
+      toast("Please write a response", "warning");
+      return;
+    }
+    setRespondLoading(true);
+    try {
+      const res = await fetch(`/api/disputes/${dispute.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ carrier_response: responseText }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setDispute(data.dispute);
+      setResponseText("");
+      toast("Response sent to shipper", "success");
+    } catch (err: any) {
+      toast(err.message || "Failed to respond", "error");
+    } finally {
+      setRespondLoading(false);
     }
   }
 
@@ -169,6 +205,80 @@ export default function TripDetailPage() {
             <div className="mt-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
               <span>{cargoLabel}</span>
               {load.weight_kg && <span>{load.weight_kg}kg</span>}
+            </div>
+          </Card>
+        )}
+
+        {/* Dispute */}
+        {dispute && (
+          <Card className="border-red-200 dark:border-red-500/20 bg-red-50/50 dark:bg-red-500/5">
+            <div className="flex items-start gap-3">
+              <ShieldAlert className="h-6 w-6 text-red-500 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-medium text-gray-900 dark:text-white">Dispute</h3>
+                  <Badge className={DISPUTE_STATUS_LABELS[dispute.status]?.color || "bg-gray-100 text-gray-800"}>
+                    {DISPUTE_STATUS_LABELS[dispute.status]?.label || dispute.status}
+                  </Badge>
+                </div>
+                <p className="text-sm font-medium text-red-700 dark:text-red-400">
+                  {DISPUTE_TYPES.find((d) => d.value === dispute.type)?.label || dispute.type}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{dispute.description}</p>
+                {dispute.evidence_urls?.length > 0 && (
+                  <div className="flex gap-2 mt-2">
+                    {dispute.evidence_urls.map((url: string, i: number) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="h-12 w-12 rounded-lg overflow-hidden border border-gray-200 dark:border-white/10 block">
+                        <img src={url} alt={`Evidence ${i + 1}`} className="h-full w-full object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+
+                {/* Carrier's own response */}
+                {dispute.carrier_response && (
+                  <div className="mt-3 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <MessageSquare className="h-3.5 w-3.5 text-gray-400" />
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Your Response</p>
+                    </div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{dispute.carrier_response}</p>
+                  </div>
+                )}
+
+                {/* Response form */}
+                {dispute.status === "open" && !dispute.carrier_response && (
+                  <div className="mt-3 space-y-2">
+                    <textarea
+                      value={responseText}
+                      onChange={(e) => setResponseText(e.target.value)}
+                      placeholder="Explain your side of the situation..."
+                      rows={3}
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white bg-white dark:bg-white/5 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow resize-none"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleRespondToDispute}
+                      loading={respondLoading}
+                    >
+                      <Send className="h-3.5 w-3.5 mr-1" /> Send Response
+                    </Button>
+                  </div>
+                )}
+
+                {dispute.status === "resolved" && (
+                  <div className="mt-3 flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle className="h-4 w-4" />
+                    Dispute resolved — delivery confirmed
+                  </div>
+                )}
+
+                {dispute.status === "escalated" && (
+                  <p className="mt-3 text-sm text-purple-600 dark:text-purple-400">
+                    This dispute has been escalated for review.
+                  </p>
+                )}
+              </div>
             </div>
           </Card>
         )}

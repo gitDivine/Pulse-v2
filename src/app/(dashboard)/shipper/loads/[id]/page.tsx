@@ -9,8 +9,9 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatNaira, timeAgo, formatWeight, formatDuration } from "@/lib/utils/format";
-import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCircle, Users } from "lucide-react";
+import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISPUTE_STATUS_LABELS } from "@/lib/constants";
+import { Select } from "@/components/ui/select";
+import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCircle, Users, AlertTriangle, Upload, X, MessageSquare, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import Link from "next/link";
 
@@ -22,6 +23,12 @@ export default function LoadDetailPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [showDisputeForm, setShowDisputeForm] = useState(false);
+  const [dispute, setDispute] = useState<any>(null);
+  const [disputeType, setDisputeType] = useState("");
+  const [disputeDesc, setDisputeDesc] = useState("");
+  const [evidenceUrls, setEvidenceUrls] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
   const supabase = createClient();
   const { toast } = useToast();
 
@@ -36,6 +43,20 @@ export default function LoadDetailPage() {
       setLoad(loadData.load);
       setBids(bidsData.bids || []);
       setLoading(false);
+
+      // Check for existing dispute via the trip
+      const { data: trip } = await supabase
+        .from("trips")
+        .select("id")
+        .eq("load_id", id)
+        .single();
+      if (trip) {
+        const disputeRes = await fetch(`/api/disputes?trip_id=${trip.id}`);
+        const disputeData = await disputeRes.json();
+        if (disputeData.disputes?.length > 0) {
+          setDispute(disputeData.disputes[0]);
+        }
+      }
     }
     fetchData();
   }, [id]);
@@ -108,6 +129,106 @@ export default function LoadDetailPage() {
       toast("Load cancelled", "success");
     } catch (err: any) {
       toast(err.message || "Failed to cancel load", "error");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleUploadEvidence(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/disputes/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setEvidenceUrls((prev) => [...prev, data.url]);
+    } catch (err: any) {
+      toast(err.message || "Upload failed", "error");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  async function handleFileDispute() {
+    if (!disputeType || !disputeDesc.trim()) {
+      toast("Please select an issue type and describe the problem", "warning");
+      return;
+    }
+    setActionLoading("dispute");
+    try {
+      const { data: trip } = await supabase
+        .from("trips")
+        .select("id")
+        .eq("load_id", id)
+        .single();
+      if (!trip) throw new Error("Trip not found");
+
+      const res = await fetch("/api/disputes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trip_id: trip.id,
+          type: disputeType,
+          description: disputeDesc,
+          evidence_urls: evidenceUrls,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setDispute(data.dispute);
+      setShowDisputeForm(false);
+      toast("Dispute filed. The carrier has been notified.", "success");
+      // Refresh load
+      const loadRes = await fetch(`/api/loads/${id}`);
+      setLoad((await loadRes.json()).load);
+    } catch (err: any) {
+      toast(err.message || "Failed to file dispute", "error");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleResolveDispute() {
+    if (!dispute) return;
+    setActionLoading("resolve");
+    try {
+      const res = await fetch(`/api/disputes/${dispute.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "resolve" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setDispute(data.dispute);
+      toast("Dispute resolved. Delivery confirmed.", "success");
+      const loadRes = await fetch(`/api/loads/${id}`);
+      setLoad((await loadRes.json()).load);
+    } catch (err: any) {
+      toast(err.message || "Failed to resolve dispute", "error");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleEscalateDispute() {
+    if (!dispute) return;
+    setActionLoading("escalate");
+    try {
+      const res = await fetch(`/api/disputes/${dispute.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "escalate" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setDispute(data.dispute);
+      toast("Dispute escalated for review", "info");
+    } catch (err: any) {
+      toast(err.message || "Failed to escalate dispute", "error");
     } finally {
       setActionLoading(null);
     }
@@ -246,27 +367,199 @@ export default function LoadDetailPage() {
           )}
         </Card>
 
-        {/* Confirm delivery button */}
-        {load.status === "delivered" && (
+        {/* Delivery confirmation + dispute */}
+        {load.status === "delivered" && !dispute && !showDisputeForm && (
           <Card className="border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/5">
             <div className="flex items-center gap-3">
-              <Truck className="h-8 w-8 text-emerald-600" />
+              <Truck className="h-8 w-8 text-emerald-600 shrink-0" />
               <div className="flex-1">
                 <p className="font-medium text-emerald-800 dark:text-emerald-400">
                   Carrier reports delivery complete
                 </p>
                 <p className="text-sm text-emerald-600 dark:text-emerald-500">
-                  Please confirm you received your goods.
+                  Please confirm you received your goods in good condition.
                 </p>
               </div>
+            </div>
+            <div className="flex gap-2 mt-3">
               <Button
                 onClick={handleConfirmDelivery}
                 loading={actionLoading === "confirm"}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700"
               >
-                <CheckCircle className="h-4 w-4 mr-1" /> Confirm
+                <CheckCircle className="h-4 w-4 mr-1" /> Confirm Delivery
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowDisputeForm(true)}
+                className="flex-1 border-red-300 dark:border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+              >
+                <AlertTriangle className="h-4 w-4 mr-1" /> Report Issue
               </Button>
             </div>
+          </Card>
+        )}
+
+        {/* Dispute form */}
+        {showDisputeForm && !dispute && (
+          <Card className="border-red-200 dark:border-red-500/20 bg-red-50/50 dark:bg-red-500/5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+                <h3 className="font-medium text-gray-900 dark:text-white">Report an Issue</h3>
+              </div>
+              <button
+                onClick={() => setShowDisputeForm(false)}
+                className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10"
+              >
+                <X className="h-4 w-4 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <Select
+                label="What went wrong?"
+                value={disputeType}
+                onChange={(e) => setDisputeType(e.target.value)}
+                options={DISPUTE_TYPES.map((d) => ({ value: d.value, label: d.label }))}
+                placeholder="Select issue type"
+              />
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Describe the issue
+                </label>
+                <textarea
+                  value={disputeDesc}
+                  onChange={(e) => setDisputeDesc(e.target.value)}
+                  placeholder="Please describe what happened in detail..."
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white bg-white dark:bg-white/5 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow resize-none"
+                />
+              </div>
+
+              {/* Evidence upload */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Evidence photos (optional)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {evidenceUrls.map((url, i) => (
+                    <div key={i} className="relative h-16 w-16 rounded-lg overflow-hidden border border-gray-200 dark:border-white/10">
+                      <img src={url} alt={`Evidence ${i + 1}`} className="h-full w-full object-cover" />
+                      <button
+                        onClick={() => setEvidenceUrls((prev) => prev.filter((_, j) => j !== i))}
+                        className="absolute top-0.5 right-0.5 rounded-full bg-black/50 p-0.5"
+                      >
+                        <X className="h-3 w-3 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                  {evidenceUrls.length < 5 && (
+                    <label className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-orange-400 dark:hover:border-orange-500 transition-colors">
+                      {uploading ? (
+                        <div className="h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4 text-gray-400" />
+                      )}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleUploadEvidence} disabled={uploading} />
+                    </label>
+                  )}
+                </div>
+                <p className="text-[11px] text-gray-400">Up to 5 photos, max 5MB each</p>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <Button
+                  variant="danger"
+                  onClick={handleFileDispute}
+                  loading={actionLoading === "dispute"}
+                  className="flex-1"
+                >
+                  <AlertTriangle className="h-4 w-4 mr-1" /> File Dispute
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDisputeForm(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Active dispute status */}
+        {dispute && (
+          <Card className="border-red-200 dark:border-red-500/20 bg-red-50/50 dark:bg-red-500/5">
+            <div className="flex items-start gap-3 mb-3">
+              <ShieldAlert className="h-6 w-6 text-red-500 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium text-gray-900 dark:text-white">Dispute Filed</h3>
+                  <Badge className={DISPUTE_STATUS_LABELS[dispute.status]?.color || "bg-gray-100 text-gray-800"}>
+                    {DISPUTE_STATUS_LABELS[dispute.status]?.label || dispute.status}
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  {DISPUTE_TYPES.find((d) => d.value === dispute.type)?.label || dispute.type}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{dispute.description}</p>
+                {dispute.evidence_urls?.length > 0 && (
+                  <div className="flex gap-2 mt-2">
+                    {dispute.evidence_urls.map((url: string, i: number) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="h-12 w-12 rounded-lg overflow-hidden border border-gray-200 dark:border-white/10 block">
+                        <img src={url} alt={`Evidence ${i + 1}`} className="h-full w-full object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Carrier response */}
+            {dispute.carrier_response && (
+              <div className="mt-3 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <MessageSquare className="h-3.5 w-3.5 text-gray-400" />
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Carrier Response</p>
+                </div>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{dispute.carrier_response}</p>
+              </div>
+            )}
+
+            {/* Actions */}
+            {dispute.status !== "resolved" && dispute.status !== "escalated" && (
+              <div className="flex gap-2 mt-3">
+                {dispute.carrier_response && (
+                  <Button
+                    size="sm"
+                    onClick={handleResolveDispute}
+                    loading={actionLoading === "resolve"}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    <ShieldCheck className="h-4 w-4 mr-1" /> Accept & Resolve
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleEscalateDispute}
+                  loading={actionLoading === "escalate"}
+                  className="flex-1"
+                >
+                  <ShieldAlert className="h-4 w-4 mr-1" /> Escalate
+                </Button>
+              </div>
+            )}
+
+            {dispute.status === "resolved" && (
+              <div className="mt-3 flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+                <ShieldCheck className="h-4 w-4" />
+                Dispute resolved — delivery confirmed
+              </div>
+            )}
           </Card>
         )}
 

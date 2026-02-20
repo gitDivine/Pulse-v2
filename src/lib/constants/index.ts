@@ -72,6 +72,23 @@ export const VERIFICATION_LABELS: Record<string, { label: string; color: string 
   cac: { label: "CAC Verified", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
 };
 
+export const DISPUTE_TYPES = [
+  { value: "damaged_goods", label: "Damaged Goods" },
+  { value: "missing_items", label: "Missing Items" },
+  { value: "wrong_items", label: "Wrong Items Delivered" },
+  { value: "late_delivery", label: "Late Delivery" },
+  { value: "not_received", label: "Goods Not Received" },
+  { value: "overcharge", label: "Overcharged" },
+  { value: "other", label: "Other Issue" },
+] as const;
+
+export const DISPUTE_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  open: { label: "Open", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  carrier_responded: { label: "Carrier Responded", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
+  resolved: { label: "Resolved", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+  escalated: { label: "Escalated", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
+};
+
 export const NOTIFICATION_PRIORITIES = {
   critical: { label: "Critical", respectsQuietHours: false },
   normal: { label: "Normal", respectsQuietHours: true },

@@ -49,7 +49,7 @@ export function DashboardShell({ children, userName, companyName, role }: Dashbo
               transition={{ type: "spring", stiffness: 400, damping: 35 }}
               className="fixed left-0 top-0 h-full"
             >
-              <Sidebar userName={userName} companyName={companyName} role={role} />
+              <Sidebar userName={userName} companyName={companyName} role={role} onNavigate={() => setMobileMenuOpen(false)} />
             </motion.div>
             <motion.button
               initial={{ opacity: 0, scale: 0.8 }}

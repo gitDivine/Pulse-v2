@@ -44,9 +44,10 @@ interface SidebarProps {
   userName: string;
   companyName?: string;
   role: "shipper" | "carrier";
+  onNavigate?: () => void;
 }
 
-export function Sidebar({ userName, companyName, role }: SidebarProps) {
+export function Sidebar({ userName, companyName, role, onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -90,6 +91,7 @@ export function Sidebar({ userName, companyName, role }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className="relative block"
             >
               <motion.div

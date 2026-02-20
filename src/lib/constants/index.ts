@@ -40,7 +40,7 @@ export const LOAD_STATUS_LABELS: Record<string, { label: string; color: string }
   in_transit: { label: "In Transit", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400" },
   delivered: { label: "Delivered", color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" },
   completed: { label: "Completed", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
-  disputed: { label: "Disputed", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  disputed: { label: "Disputed Delivery", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
   cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
 };
 

@@ -49,12 +49,13 @@ export default function CarrierLoadDetailPage() {
       setLoad(loadData.load);
       setVehicles(vehiclesData.vehicles || []);
 
-      // Check if user already bid
+      // Check if user already has an active bid (not withdrawn)
       const { data: bids } = await supabase
         .from("bids")
         .select("*")
         .eq("load_id", id)
         .eq("carrier_id", user.id)
+        .neq("status", "withdrawn")
         .single();
 
       if (bids) setExistingBid(bids);
@@ -104,9 +105,13 @@ export default function CarrierLoadDetailPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to withdraw bid");
-      setExistingBid({ ...existingBid, status: "withdrawn" });
+      setExistingBid(null);
+      setBidAmount("");
+      setBidMessage("");
+      setEstimatedHours("");
+      setVehicleId("");
       setWithdrawConfirm(false);
-      toast("Bid withdrawn", "success");
+      toast("Bid withdrawn — you can bid again", "success");
     } catch (err: any) {
       toast(err.message || "Failed to withdraw bid", "error");
     } finally {

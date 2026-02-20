@@ -1,6 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, createServiceRoleSupabase } from "@/lib/supabase/server";
 
+// GET /api/bid-invitations — fetch invitations for the current carrier
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createServerSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const serviceSupabase = createServiceRoleSupabase();
+
+    const { data, error } = await serviceSupabase
+      .from("bid_invitations")
+      .select(`
+        id, status, created_at,
+        loads(id, load_number, origin_city, origin_state, destination_city, destination_state, cargo_type, weight_kg, budget_amount, is_negotiable, pickup_date, status, bid_count, profiles!loads_shipper_id_fkey(full_name, company_name, avg_rating))
+      `)
+      .eq("carrier_id", user.id)
+      .in("status", ["pending", "viewed"])
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    // Filter out invitations where the load is no longer biddable
+    const invitations = (data || []).filter((inv: any) => {
+      const load = inv.loads;
+      return load && ["posted", "bidding"].includes(load.status);
+    });
+
+    return NextResponse.json({ invitations, total: invitations.length });
+  } catch {
+    return NextResponse.json({ error: "Failed to fetch invitations" }, { status: 500 });
+  }
+}
+
 // POST /api/bid-invitations — invite a carrier to bid on a load
 export async function POST(request: NextRequest) {
   try {

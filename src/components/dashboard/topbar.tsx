@@ -1,10 +1,10 @@
 "use client";
 
-import { Bell, Menu, Check, ExternalLink } from "lucide-react";
+import { Bell, Menu, Check } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { timeAgo } from "@/lib/utils/format";
-import Link from "next/link";
 
 interface TopbarProps {
   title: string;
@@ -12,6 +12,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ title, onMenuClick }: TopbarProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -153,9 +154,16 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
                     {notifications.map((n) => (
                       <div
                         key={n.id}
+                        onClick={() => {
+                          if (!n.is_read) markAsRead(n.id);
+                          if (n.action_url) {
+                            setOpen(false);
+                            router.push(n.action_url);
+                          }
+                        }}
                         className={`group relative px-4 py-3 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${
-                          !n.is_read ? "bg-orange-50/50 dark:bg-orange-500/5" : ""
-                        }`}
+                          n.action_url ? "cursor-pointer" : ""
+                        } ${!n.is_read ? "bg-orange-50/50 dark:bg-orange-500/5" : ""}`}
                       >
                         <div className="flex gap-3">
                           {/* Priority dot */}
@@ -169,31 +177,19 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{n.body}</p>
                             <p className="text-[10px] text-gray-400 mt-1">{timeAgo(n.created_at)}</p>
                           </div>
-                          {/* Actions */}
-                          <div className="flex items-start gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {!n.is_read && (
-                              <button
-                                onClick={() => markAsRead(n.id)}
-                                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-white/10"
-                                title="Mark as read"
-                              >
-                                <Check className="h-3.5 w-3.5 text-gray-400" />
-                              </button>
-                            )}
-                            {n.action_url && (
-                              <Link
-                                href={n.action_url}
-                                onClick={() => {
-                                  if (!n.is_read) markAsRead(n.id);
-                                  setOpen(false);
-                                }}
-                                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-white/10"
-                                title="View"
-                              >
-                                <ExternalLink className="h-3.5 w-3.5 text-gray-400" />
-                              </Link>
-                            )}
-                          </div>
+                          {/* Mark as read button */}
+                          {!n.is_read && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(n.id);
+                              }}
+                              className="shrink-0 p-1 rounded hover:bg-gray-100 dark:hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Mark as read"
+                            >
+                              <Check className="h-3.5 w-3.5 text-gray-400" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}

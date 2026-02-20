@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatNaira, timeAgo, formatWeight } from "@/lib/utils/format";
 import { LOAD_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, Package, Star, Send, XCircle } from "lucide-react";
+import { MapPin, Package, Star, Send, XCircle, ArrowRight } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 
 export default function CarrierLoadDetailPage() {
@@ -32,6 +32,7 @@ export default function CarrierLoadDetailPage() {
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawConfirm, setWithdrawConfirm] = useState(false);
+  const [tripId, setTripId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -60,6 +61,16 @@ export default function CarrierLoadDetailPage() {
 
       if (bids) {
         setExistingBid(bids);
+        // If bid was accepted, fetch the trip
+        if ((bids as any).status === "accepted") {
+          const { data: trip } = await supabase
+            .from("trips")
+            .select("id")
+            .eq("load_id", id)
+            .eq("carrier_id", user.id)
+            .single();
+          if (trip) setTripId(trip.id);
+        }
       } else if (loadData.load?.budget_amount) {
         // Pre-fill bid amount with shipper's budget (kobo → naira)
         setBidAmount(String(loadData.load.budget_amount / 100));
@@ -240,7 +251,11 @@ export default function CarrierLoadDetailPage() {
 
         {/* Bid form or existing bid */}
         {existingBid ? (
-          <Card className={`${existingBid.status === "withdrawn" ? "border-gray-200 dark:border-white/10" : "border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/5"}`}>
+          <Card className={`${
+            existingBid.status === "withdrawn" ? "border-gray-200 dark:border-white/10" :
+            existingBid.status === "accepted" ? "border-green-200 dark:border-green-500/20 bg-green-50 dark:bg-green-500/5" :
+            "border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/5"
+          }`}>
             <CardTitle className="mb-2">Your Bid</CardTitle>
             <div className="flex items-center justify-between">
               <p className="text-lg font-bold text-gray-900 dark:text-white">{formatNaira(existingBid.amount)}</p>
@@ -253,6 +268,14 @@ export default function CarrierLoadDetailPage() {
                 {existingBid.status}
               </Badge>
             </div>
+            {existingBid.status === "accepted" && tripId && (
+              <Button
+                className="w-full mt-3"
+                onClick={() => router.push(`/carrier/trips/${tripId}`)}
+              >
+                Go to Trip <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            )}
             {existingBid.message && (
               <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{existingBid.message}</p>
             )}

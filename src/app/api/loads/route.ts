@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createServerSupabase, createServiceRoleSupabase } from "@/lib/supabase/server";
 
 // GET /api/loads — list loads (filterable)
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const serviceSupabase = await createServiceRoleSupabase();
     const { searchParams } = new URL(request.url);
 
     const status = searchParams.get("status");
@@ -15,7 +19,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = parseInt(searchParams.get("offset") || "0");
 
-    let query = supabase
+    let query = serviceSupabase
       .from("loads")
       .select("*, profiles!loads_shipper_id_fkey(full_name, company_name, avg_rating, total_reviews)", { count: "exact" });
 

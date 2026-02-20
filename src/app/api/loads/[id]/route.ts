@@ -9,8 +9,11 @@ export async function GET(
   try {
     const { id } = await params;
     const supabase = await createServerSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data, error } = await supabase
+    const serviceSupabase = await createServiceRoleSupabase();
+    const { data, error } = await serviceSupabase
       .from("loads")
       .select("*, profiles!loads_shipper_id_fkey(full_name, company_name, avg_rating, total_reviews, phone)")
       .eq("id", id)

@@ -86,6 +86,14 @@ export async function POST(
           return NextResponse.json({ error: `Failed to place bid: ${updateError.message}` }, { status: 500 });
         }
 
+        // Update invitation status (trigger only fires on INSERT, not UPDATE)
+        await serviceSupabase
+          .from("bid_invitations")
+          .update({ status: "bid_placed" })
+          .eq("load_id", id)
+          .eq("carrier_id", user.id)
+          .in("status", ["pending", "viewed"]);
+
         // Notify shipper
         const { data: carrier } = await serviceSupabase
           .from("profiles")

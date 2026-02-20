@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { formatNaira, timeAgo, formatWeight } from "@/lib/utils/format";
 import { LOAD_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
 import { MapPin, Package, Star, Send, XCircle, ArrowRight } from "lucide-react";
+import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import { useToast } from "@/components/ui/toast";
 
 export default function CarrierLoadDetailPage() {
@@ -33,6 +34,7 @@ export default function CarrierLoadDetailPage() {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawConfirm, setWithdrawConfirm] = useState(false);
   const [tripId, setTripId] = useState<string | null>(null);
+  const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -225,9 +227,13 @@ export default function CarrierLoadDetailPage() {
           <Card>
             <CardTitle className="mb-3">Shipper</CardTitle>
             <div className="space-y-2 text-sm">
-              <p className="font-medium text-gray-900 dark:text-white">
+              <button
+                type="button"
+                onClick={() => setPreviewUserId(load.shipper_id)}
+                className="font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+              >
                 {shipper?.company_name || shipper?.full_name}
-              </p>
+              </button>
               {shipper?.avg_rating > 0 && (
                 <div className="flex items-center gap-1 text-yellow-600">
                   <Star className="h-3.5 w-3.5 fill-current" />
@@ -371,6 +377,8 @@ export default function CarrierLoadDetailPage() {
           </Card>
         ) : null}
       </div>
+
+      <ProfilePreview userId={previewUserId} onClose={() => setPreviewUserId(null)} />
     </div>
   );
 }

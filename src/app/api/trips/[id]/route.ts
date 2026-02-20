@@ -76,6 +76,49 @@ export async function PATCH(
       await serviceSupabase.from("loads").update({ status: "delivered" as any }).eq("id", t.load_id);
     } else if (status === "confirmed") {
       await serviceSupabase.from("loads").update({ status: "completed" as any }).eq("id", t.load_id);
+
+      // SCOUT V1: Save delivery-confirmed addresses to the address database
+      const loadData = t.loads as any;
+      if (loadData) {
+        const upsertAddress = async (addr: string, landmark: string | null, city: string, state: string, lga: string | null) => {
+          // Check for existing address (case-insensitive match)
+          const { data: existing } = await serviceSupabase
+            .from("addresses")
+            .select("id, delivery_count")
+            .ilike("raw_address", addr)
+            .ilike("city", city)
+            .ilike("state", state)
+            .limit(1)
+            .single();
+
+          if (existing) {
+            const newCount = (existing.delivery_count || 0) + 1;
+            const confidence = Math.min(1.0, 0.3 + newCount * 0.1);
+            await serviceSupabase.from("addresses").update({
+              delivery_count: newCount,
+              confidence_score: confidence,
+              landmark: landmark || undefined,
+              lga: lga || undefined,
+            } as any).eq("id", existing.id);
+          } else {
+            await serviceSupabase.from("addresses").insert({
+              raw_address: addr,
+              landmark: landmark || null,
+              city,
+              state,
+              lga: lga || null,
+              contributor_id: user.id,
+              confidence_score: 0.3,
+            } as any);
+          }
+        };
+
+        // Upsert both origin and destination (non-blocking)
+        Promise.all([
+          upsertAddress(loadData.origin_address, loadData.origin_landmark, loadData.origin_city, loadData.origin_state, loadData.origin_lga),
+          upsertAddress(loadData.destination_address, loadData.destination_landmark, loadData.destination_city, loadData.destination_state, loadData.destination_lga),
+        ]).catch(() => {}); // Don't block the response if address save fails
+      }
     }
 
     // Notify the other party

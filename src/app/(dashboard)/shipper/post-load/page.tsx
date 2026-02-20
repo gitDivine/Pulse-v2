@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { NIGERIAN_STATES, CARGO_TYPES } from "@/lib/constants";
 import { formatNaira } from "@/lib/utils/format";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { MapPin, Package, Banknote, CheckCircle, ArrowLeft, ArrowRight, Copy, ChevronDown } from "lucide-react";
 
 const STEPS = [
@@ -254,11 +255,17 @@ export default function PostLoadPage() {
             {step === 0 && (
               <>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Where is the pickup?</h3>
-                <Input
+                <AddressAutocomplete
                   label="Pickup Address"
                   placeholder="e.g. 12 Allen Avenue, Ikeja"
                   value={originAddress}
-                  onChange={(e) => setOriginAddress(e.target.value)}
+                  onChange={setOriginAddress}
+                  filterState={originState || undefined}
+                  onSelect={(addr) => {
+                    if (addr.landmark) setOriginLandmark(addr.landmark);
+                    if (addr.city) setOriginCity(addr.city);
+                    if (addr.state) setOriginState(addr.state);
+                  }}
                   required
                 />
                 <Input
@@ -290,11 +297,17 @@ export default function PostLoadPage() {
             {step === 1 && (
               <>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Where should it be delivered?</h3>
-                <Input
+                <AddressAutocomplete
                   label="Delivery Address"
                   placeholder="e.g. 5 Aba Road, Port Harcourt"
                   value={destAddress}
-                  onChange={(e) => setDestAddress(e.target.value)}
+                  onChange={setDestAddress}
+                  filterState={destState || undefined}
+                  onSelect={(addr) => {
+                    if (addr.landmark) setDestLandmark(addr.landmark);
+                    if (addr.city) setDestCity(addr.city);
+                    if (addr.state) setDestState(addr.state);
+                  }}
                   required
                 />
                 <Input

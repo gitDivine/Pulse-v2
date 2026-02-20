@@ -183,3 +183,28 @@ PULSE is Africa's Logistics Nervous System — a two-sided freight marketplace c
 - Build passes: 0 errors, all routes clean
 - **What's pending**: Run 007_disputes.sql in Supabase, test dispute flow end-to-end
 - **Next steps**: Run migration → test: deliver load → shipper reports issue → carrier responds → shipper resolves or escalates
+
+### Session 10 — 2026-02-20 (continued)
+- Ran 007_disputes.sql — fixed partial migration issues (enum values `carrier_responded`, `escalated`, `resolved` missing from `dispute_status` due to partial first run, fixed with `ALTER TYPE ... ADD VALUE IF NOT EXISTS`)
+- Fixed dispute PATCH API: safe nested access for join data, real error messages surfaced instead of generic "Failed to update dispute", non-critical ops (notifications, tracking) wrapped to not block main action
+- Added `disputed` to `load_status` enum, updated `set_trip_disputed()` trigger to set load status to `disputed` instead of `delivered`
+- Added "Disputed Delivery" label (red badge) to LOAD_STATUS_LABELS
+- Fixed existing loads stuck on "delivered" by running UPDATE to set active disputed loads to `disputed`
+- **Copy Load improvements**: added copy icon on each load card in My Loads list, cargo description shown alongside load number on loads list and invite modal
+- **"Copy from a previous load" picker**: on Post Load page, shows collapsible list of recent loads above the form, tapping one pre-fills all fields and jumps to Cargo step
+- All changes committed and pushed, Vercel deployed
+- **Dispute flow fully tested and working**: file → carrier responds → shipper resolves/escalates
+- **What's done**: Complete logistics marketplace with disputes, carrier directory, notifications, bid management, copy load
+- **What's next**: Reviews/ratings, payment flow, identity verification
+
+### Session 11 — 2026-02-20 (continued)
+- Built **SCOUT V1** — delivery-confirmed address database
+- Created `008_scout_v1.sql`: unique constraint on addresses (lower raw_address + city + state), `upsert_delivery_address()` function, `source` and `last_verified_at` columns, GIN text search index, confidence index, public read RLS policy
+- Modified trip PATCH API: when delivery is confirmed (`status === "confirmed"`), both origin and destination addresses are upserted into the addresses table. Existing addresses get `delivery_count` incremented and `confidence_score` recalculated (formula: min(1.0, 0.3 + count * 0.1)). New addresses inserted with score 0.3
+- Enhanced addresses API: search matches both `raw_address` and `landmark`, ordered by delivery_count then confidence, uses service role for RLS bypass
+- Built `AddressAutocomplete` component: debounced search (300ms), dropdown of verified addresses with delivery count badges, confidence indicators (green checkmark for score >= 0.7), auto-fills landmark/city/state on selection
+- Wired AddressAutocomplete into post-load form (both Pickup and Delivery steps), replacing plain Input for address fields
+- Updated `database.ts` types: added `source` and `last_verified_at` to addresses table
+- Build passes: 0 errors
+- **What's pending**: Run `008_scout_v1.sql` in Supabase SQL Editor
+- **What's next**: Commit & push, test SCOUT flow end-to-end (post load → bid → deliver → confirm → verify address saved → post new load → see autocomplete suggestions)

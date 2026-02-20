@@ -330,6 +330,8 @@ export interface Database {
           delivery_count: number;
           failed_delivery_count: number;
           contributor_id: string | null;
+          source: string;
+          last_verified_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -345,6 +347,7 @@ export interface Database {
           confidence_score?: number;
           delivery_notes?: string | null;
           contributor_id?: string | null;
+          source?: string;
         };
         Update: {
           parsed_address?: string | null;
@@ -356,6 +359,8 @@ export interface Database {
           delivery_notes?: string | null;
           delivery_count?: number;
           failed_delivery_count?: number;
+          source?: string;
+          last_verified_at?: string | null;
         };
         Relationships: [];
       };

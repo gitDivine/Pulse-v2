@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log("Create load body:", JSON.stringify({ origin_city: body.origin_city, origin_state: body.origin_state, dest_city: body.destination_city, dest_state: body.destination_state }));
 
     const { data, error } = await supabase
       .from("loads")
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
+    console.log("Created load:", JSON.stringify({ id: (data as any)?.id, origin_city: (data as any)?.origin_city, origin_state: (data as any)?.origin_state }));
     return NextResponse.json({ load: data }, { status: 201 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : JSON.stringify(err);

@@ -53,10 +53,7 @@ export default function PostLoadPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/loads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const payload = {
           origin_address: originAddress,
           origin_landmark: originLandmark || null,
           origin_city: originCity,
@@ -75,7 +72,15 @@ export default function PostLoadPage() {
           pickup_date: pickupDate,
           delivery_date: deliveryDate || null,
           status: "posted",
-        }),
+      };
+
+      // DEBUG: remove after confirming data is sent correctly
+      console.log("POST load payload:", JSON.stringify(payload, null, 2));
+
+      const res = await fetch("/api/loads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();

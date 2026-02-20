@@ -53,7 +53,10 @@ export default function PostLoadPage() {
     setLoading(true);
 
     try {
-      const payload = {
+      const res = await fetch("/api/loads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           origin_address: originAddress,
           origin_landmark: originLandmark || null,
           origin_city: originCity,
@@ -67,20 +70,12 @@ export default function PostLoadPage() {
           weight_kg: weightKg ? parseInt(weightKg) : null,
           quantity: parseInt(quantity) || 1,
           special_instructions: specialInstructions || null,
-          budget_amount: budgetAmount ? parseInt(budgetAmount) * 100 : null, // Convert naira to kobo
+          budget_amount: budgetAmount ? parseInt(budgetAmount) * 100 : null,
           is_negotiable: isNegotiable,
           pickup_date: pickupDate,
           delivery_date: deliveryDate || null,
           status: "posted",
-      };
-
-      // DEBUG: remove after confirming data is sent correctly
-      console.log("POST load payload:", JSON.stringify(payload, null, 2));
-
-      const res = await fetch("/api/loads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        }),
       });
 
       const data = await res.json();

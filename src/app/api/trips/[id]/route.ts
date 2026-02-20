@@ -63,7 +63,7 @@ export async function PATCH(
       .from("trips")
       .update(updateData)
       .eq("id", id)
-      .select("*, loads(shipper_id, load_number)")
+      .select("*, loads(*, profiles!loads_shipper_id_fkey(full_name, company_name, phone, avg_rating)), profiles!trips_carrier_id_fkey(full_name, company_name, phone, avg_rating), vehicles(vehicle_type, plate_number)")
       .single();
 
     if (error) throw error;

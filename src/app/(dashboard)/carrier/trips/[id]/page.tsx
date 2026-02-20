@@ -45,7 +45,7 @@ export default function TripDetailPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setTrip(data.trip);
+        setTrip((prev: any) => ({ ...prev, ...data.trip, loads: data.trip.loads || prev?.loads }));
         // Refresh events
         const eventsRes = await fetch(`/api/trips/${id}/tracking`);
         setEvents((await eventsRes.json()).events || []);

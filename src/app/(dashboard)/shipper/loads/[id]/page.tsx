@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatNaira, timeAgo, formatWeight, formatDuration } from "@/lib/utils/format";
 import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy } from "lucide-react";
+import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCircle } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 import Link from "next/link";
 
 export default function LoadDetailPage() {
@@ -20,7 +21,9 @@ export default function LoadDetailPage() {
   const [bids, setBids] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [cancelConfirm, setCancelConfirm] = useState(false);
   const supabase = createClient();
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchData() {
@@ -84,6 +87,27 @@ export default function LoadDetailPage() {
         const loadRes = await fetch(`/api/loads/${id}`);
         setLoad((await loadRes.json()).load);
       }
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleCancelLoad() {
+    setActionLoading("cancel");
+    try {
+      const res = await fetch(`/api/loads/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "cancelled" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to cancel load");
+      setLoad(data.load);
+      setBids((prev) => prev.map((b) => b.status === "pending" ? { ...b, status: "rejected" } : b));
+      setCancelConfirm(false);
+      toast("Load cancelled", "success");
+    } catch (err: any) {
+      toast(err.message || "Failed to cancel load", "error");
     } finally {
       setActionLoading(null);
     }
@@ -316,6 +340,49 @@ export default function LoadDetailPage() {
             </div>
           )}
         </Card>
+
+        {/* Cancel Load */}
+        {!["cancelled", "completed", "in_transit", "delivered"].includes(load.status) && (
+          <Card className="border-red-100 dark:border-red-500/10">
+            {!cancelConfirm ? (
+              <button
+                onClick={() => setCancelConfirm(true)}
+                className="flex items-center gap-2 text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+              >
+                <XCircle className="h-4 w-4" />
+                Cancel this load
+              </button>
+            ) : (
+              <div>
+                <p className="text-sm text-gray-900 dark:text-white font-medium mb-1">
+                  Are you sure you want to cancel this load?
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  {bids.filter((b) => b.status === "pending").length > 0
+                    ? `${bids.filter((b) => b.status === "pending").length} pending bid(s) will be rejected and carriers will be notified.`
+                    : "This action cannot be undone."}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={handleCancelLoad}
+                    loading={actionLoading === "cancel"}
+                  >
+                    Yes, cancel load
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCancelConfirm(false)}
+                  >
+                    Keep it
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Card>
+        )}
       </div>
     </div>
   );

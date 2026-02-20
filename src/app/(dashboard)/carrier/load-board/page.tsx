@@ -10,10 +10,8 @@ import { formatNaira, timeAgo, formatWeight } from "@/lib/utils/format";
 import { NIGERIAN_STATES, CARGO_TYPES, LOAD_STATUS_LABELS } from "@/lib/constants";
 import { MapPin, ArrowRight, Package, Star, Calendar, Mail, Check, Undo2 } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 
 export default function LoadBoardPage() {
-  const supabase = createClient();
   const [tab, setTab] = useState<"loads" | "invitations">("loads");
   const [loads, setLoads] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
@@ -46,25 +44,22 @@ export default function LoadBoardPage() {
   // Fetch carrier's bids to show badges on load cards
   useEffect(() => {
     async function fetchMyBids() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase
-        .from("bids")
-        .select("load_id, status")
-        .eq("carrier_id", user.id);
-      if (data) {
-        const map: Record<string, string> = {};
-        for (const bid of data) {
-          // If multiple bids exist (withdrawn + new), prefer the non-withdrawn one
-          if (!map[bid.load_id] || bid.status !== "withdrawn") {
-            map[bid.load_id] = bid.status;
+      try {
+        const res = await fetch("/api/bids");
+        const data = await res.json();
+        if (data.bids) {
+          const map: Record<string, string> = {};
+          for (const bid of data.bids) {
+            if (!map[bid.load_id] || bid.status !== "withdrawn") {
+              map[bid.load_id] = bid.status;
+            }
           }
+          setMyBids(map);
         }
-        setMyBids(map);
-      }
+      } catch {}
     }
     fetchMyBids();
-  }, [supabase]);
+  }, []);
 
   // Fetch invitations on mount
   useEffect(() => {

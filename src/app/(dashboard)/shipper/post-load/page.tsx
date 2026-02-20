@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { NIGERIAN_STATES, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, Package, Banknote, CheckCircle, ArrowLeft, ArrowRight } from "lucide-react";
+import { formatNaira } from "@/lib/utils/format";
+import { MapPin, Package, Banknote, CheckCircle, ArrowLeft, ArrowRight, Copy, ChevronDown } from "lucide-react";
 
 const STEPS = [
   { label: "Pickup", icon: MapPin },
@@ -23,6 +25,11 @@ export default function PostLoadPage() {
   const [error, setError] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
+  const supabase = createClient();
+
+  // Copy from previous load
+  const [recentLoads, setRecentLoads] = useState<any[]>([]);
+  const [showLoadPicker, setShowLoadPicker] = useState(false);
 
   // Pickup
   const [originAddress, setOriginAddress] = useState("");
@@ -73,6 +80,43 @@ export default function PostLoadPage() {
     // Skip to Cargo step — route is already filled, cargo is what changes
     setStep(2);
   }, [searchParams]);
+
+  // Fetch recent loads for "copy from previous" picker
+  useEffect(() => {
+    if (searchParams.get("duplicate")) return; // Already duplicating
+    async function fetchRecent() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("loads")
+        .select("id, load_number, origin_city, origin_state, destination_city, destination_state, cargo_type, cargo_description, origin_address, origin_landmark, destination_address, destination_landmark, weight_kg, quantity, special_instructions, budget_amount, is_negotiable")
+        .eq("shipper_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(8);
+      if (data?.length) setRecentLoads(data);
+    }
+    fetchRecent();
+  }, []);
+
+  function prefillFromLoad(load: any) {
+    setOriginAddress(load.origin_address || "");
+    setOriginLandmark(load.origin_landmark || "");
+    setOriginCity(load.origin_city || "");
+    setOriginState(load.origin_state || "");
+    setDestAddress(load.destination_address || "");
+    setDestLandmark(load.destination_landmark || "");
+    setDestCity(load.destination_city || "");
+    setDestState(load.destination_state || "");
+    setCargoType(load.cargo_type || "general");
+    setCargoDescription(load.cargo_description || "");
+    setWeightKg(load.weight_kg ? String(load.weight_kg) : "");
+    setQuantity(load.quantity ? String(load.quantity) : "1");
+    setSpecialInstructions(load.special_instructions || "");
+    setBudgetAmount(load.budget_amount ? String(load.budget_amount / 100) : "");
+    setIsNegotiable(load.is_negotiable ?? true);
+    setShowLoadPicker(false);
+    setStep(2); // Jump to Cargo step — route pre-filled, cargo is what changes
+  }
 
   async function handleSubmit() {
     setError("");
@@ -125,6 +169,53 @@ export default function PostLoadPage() {
       <Topbar title="Post a Load" />
 
       <div className="max-w-2xl mx-auto p-6">
+        {/* Copy from previous load */}
+        {recentLoads.length > 0 && step === 0 && !searchParams.get("duplicate") && (
+          <div className="mb-6">
+            <button
+              type="button"
+              onClick={() => setShowLoadPicker(!showLoadPicker)}
+              className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+            >
+              <Copy className="h-3.5 w-3.5" />
+              <span>Posted before? <span className="font-medium text-orange-600 dark:text-orange-400">Copy from a previous load</span></span>
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showLoadPicker ? "rotate-180" : ""}`} />
+            </button>
+            <AnimatePresence>
+              {showLoadPicker && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-3 space-y-1.5">
+                    {recentLoads.map((l) => (
+                      <button
+                        key={l.id}
+                        type="button"
+                        onClick={() => prefillFromLoad(l)}
+                        className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left bg-gray-50 dark:bg-white/5 border border-transparent hover:border-orange-200 dark:hover:border-orange-500/20 hover:bg-orange-50 dark:hover:bg-orange-500/5 transition-colors"
+                      >
+                        <Copy className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {l.origin_city} → {l.destination_city}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            {l.load_number}{l.cargo_description ? ` — ${l.cargo_description}` : ""} · {l.cargo_type}{l.budget_amount ? ` · ${formatNaira(l.budget_amount)}` : ""}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
         {/* Step indicator */}
         <div className="flex items-center gap-2 mb-8">
           {STEPS.map((s, i) => {

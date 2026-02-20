@@ -13,6 +13,7 @@ import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISP
 import { Select } from "@/components/ui/select";
 import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCircle, Users, AlertTriangle, Upload, X, MessageSquare, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import Link from "next/link";
 
 export default function LoadDetailPage() {
@@ -29,6 +30,7 @@ export default function LoadDetailPage() {
   const [disputeDesc, setDisputeDesc] = useState("");
   const [evidenceUrls, setEvidenceUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const supabase = createClient();
   const { toast } = useToast();
 
@@ -588,9 +590,13 @@ export default function LoadDetailPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewUserId(bid.carrier_id); }}
+                          className="text-sm font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors text-left"
+                        >
                           {carrier?.company_name || carrier?.full_name || "Unknown Carrier"}
-                        </p>
+                        </button>
                         <div className="flex items-center gap-2 mt-0.5">
                           {carrier?.avg_rating > 0 && (
                             <span className="flex items-center gap-0.5 text-xs text-yellow-600">
@@ -686,6 +692,8 @@ export default function LoadDetailPage() {
           </Card>
         )}
       </div>
+
+      <ProfilePreview userId={previewUserId} onClose={() => setPreviewUserId(null)} />
     </div>
   );
 }

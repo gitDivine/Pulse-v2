@@ -15,6 +15,7 @@ import {
   Star, Heart, MapPin, Truck, Shield, Search,
   ChevronLeft, ChevronRight, Send, X, Users, Check,
 } from "lucide-react";
+import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import Link from "next/link";
 
 const PAGE_SIZE = 20;
@@ -48,6 +49,7 @@ export default function CarrierDirectoryPage() {
   const [loadsLoading, setLoadsLoading] = useState(false);
   const [selectedLoadIds, setSelectedLoadIds] = useState<Set<string>>(new Set());
   const [inviting, setInviting] = useState(false);
+  const [previewUserId, setPreviewUserId] = useState<string | null>(null);
 
   // Search debounce
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -302,21 +304,25 @@ export default function CarrierDirectoryPage() {
                       </button>
 
                       {/* Carrier info */}
-                      <div className="flex items-start gap-3 pr-8">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewUserId(carrier.id)}
+                        className="flex items-start gap-3 pr-8 text-left group"
+                      >
                         <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-500/10 flex items-center justify-center shrink-0">
                           <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
                             {(carrier.full_name || "?")[0].toUpperCase()}
                           </span>
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                             {carrier.company_name || carrier.full_name}
                           </p>
                           {carrier.company_name && (
                             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{carrier.full_name}</p>
                           )}
                         </div>
-                      </div>
+                      </button>
 
                       {/* Location */}
                       {carrier.state && (
@@ -499,6 +505,8 @@ export default function CarrierDirectoryPage() {
           </div>
         )}
       </AnimatePresence>
+
+      <ProfilePreview userId={previewUserId} onClose={() => setPreviewUserId(null)} />
     </div>
   );
 }

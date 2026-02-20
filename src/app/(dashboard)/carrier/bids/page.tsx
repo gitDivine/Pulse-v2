@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatNaira, timeAgo } from "@/lib/utils/format";
 import { BID_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
 import { MapPin, ArrowRight, Package, Gavel } from "lucide-react";
+import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import Link from "next/link";
 
 type BidFilter = "all" | "pending" | "accepted" | "rejected" | "withdrawn";
@@ -16,6 +17,7 @@ export default function CarrierBidsPage() {
   const [bids, setBids] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<BidFilter>("all");
+  const [previewUserId, setPreviewUserId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchBids() {
@@ -120,9 +122,13 @@ export default function CarrierBidsPage() {
 
                           {/* Shipper + time */}
                           <div className="flex items-center gap-2 mt-1.5 text-xs">
-                            <span className="text-gray-500 dark:text-gray-400">
+                            <button
+                              type="button"
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewUserId(load?.shipper_id); }}
+                              className="text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                            >
                               {shipper?.company_name || shipper?.full_name}
-                            </span>
+                            </button>
                             <span className="text-gray-400">· {timeAgo(bid.created_at)}</span>
                           </div>
                         </div>
@@ -154,6 +160,8 @@ export default function CarrierBidsPage() {
           </div>
         )}
       </div>
+
+      <ProfilePreview userId={previewUserId} onClose={() => setPreviewUserId(null)} />
     </div>
   );
 }

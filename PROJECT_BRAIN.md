@@ -1,29 +1,26 @@
 # PULSE — Project Brain
 
 ## Project Summary
-PULSE is Africa's Commerce Nervous System — a unified platform with four engines (SCOUT, HAUL, FLOW, CONVOY) that connects businesses with logistics providers. Built on a $0 infrastructure stack.
+PULSE is Africa's Logistics Nervous System — a two-sided freight marketplace combining SCOUT (address intelligence), HAUL (freight marketplace), and CONVOY (shared freight). Shippers post loads, carriers bid and deliver. Built on a $0 infrastructure stack.
 
 ## Current State
-- **Phase**: Phase 1 — FLOW (SME Commerce Operating System)
-- **Status**: Deployed to production
+- **Phase**: Logistics Marketplace (HAUL + SCOUT)
+- **Status**: Built & pushed, awaiting database migration
 - **Live URL**: https://pulse-one-mu.vercel.app
 - **GitHub**: https://github.com/gitDivine/Pulse
-- **Stack**: Next.js 14+ (App Router), TypeScript, Tailwind CSS, Supabase, Paystack
+- **Stack**: Next.js 16.1.6 (App Router, Turbopack), TypeScript, Tailwind CSS, Supabase, Paystack, Framer Motion
 
 ## Architecture
-- **Web storefront**: Next.js on Vercel (buyer discovery, seller dashboard)
-- **Native app**: React Native + Expo (carriers, sellers, repeat buyers) — Phase 2
-- **Backend**: Supabase (Postgres, Auth, Real-time, Storage)
-- **Payments**: Paystack (revenue-share, $0 upfront)
-- **AI**: Groq (primary) + Gemini (fallback) + Hugging Face
-- **Maps**: OpenStreetMap + Leaflet
-- **Notifications**: PWA Push + Email (Resend free tier) + SMS (Termii free tier)
+- **Frontend**: Next.js on Vercel — shipper dashboard + carrier dashboard + landing page
+- **Backend**: Supabase (Postgres, Auth, Real-time, RLS)
+- **Payments**: Paystack (trip-based payments in NGN, test mode)
+- **Animations**: Framer Motion (spring physics, layout animations, scroll reveals)
+- **Routing**: Role-based — `/shipper/*` and `/carrier/*` with middleware guards
 
-## Four Engines
-1. **FLOW** (Phase 1) — SME operating system: orders, inventory, payments, customer comms
-2. **HAUL** (Phase 2) — Freight marketplace: carrier matching, trust scores, fleet management
-3. **SCOUT** (Phase 3) — Location intelligence: crowdsourced address database, landmark navigation
-4. **CONVOY** (Phase 5) — Shared freight: load consolidation with convoy windows
+## Platform Structure
+- **Shipper flows**: Post load → receive bids → accept bid → track trip → confirm delivery → pay
+- **Carrier flows**: Browse load board → bid on loads → manage trips → update tracking → receive payment
+- **SCOUT**: Crowdsourced address/landmark database for Nigerian locations
 
 ## Launch Sequence
 1. FLOW as standalone commerce tool (50-100 SMEs, Lagos-Ibadan)
@@ -54,33 +51,32 @@ PULSE is Africa's Commerce Nervous System — a unified platform with four engin
 10. One-tap order-to-logistics flow
 
 ## Active Tasks
-- [x] Project structure setup
-- [x] Database schema for FLOW
-- [x] Authentication system (phone OTP)
-- [x] Seller onboarding (2-step: profile → business)
-- [x] Product catalogue (CRUD, publish/unpublish, low stock alerts)
-- [x] Buyer storefront + chat widget (AI-assisted, Zone 1)
-- [x] Seller dashboard + unified inbox (real-time messages)
-- [x] Order management (status progression, cancel, expandable details)
-- [x] Payment integration (Paystack init + webhook with HMAC verification)
-- [x] QR codes + sharing (storefront URL copy, QR download)
-- [x] Analytics page (revenue, avg order, top regions, low stock)
-- [x] Settings page (storefront link, quiet hours, account info)
-- [x] Landing page (hero, four engines, value props, CTA)
-- [x] Build compiles successfully
-- [x] Connect real Supabase project
-- [x] Run database migration (001_initial_schema.sql)
-- [x] Auth switched from phone OTP to email + password ($0 cost)
-- [x] Paystack account created (test mode keys configured)
-- [x] AI keys configured (Groq + Gemini)
-- [x] Supabase Realtime enabled for messages, conversations, orders
-- [x] Deployed to Vercel: https://pulse-one-mu.vercel.app
-- [x] GitHub repo: https://github.com/gitDivine/Pulse
-- [ ] Notification system (beyond basic DB entries)
-- [ ] Basic SCOUT address resolution
+- [x] Delete FLOW commerce files (products, orders, inbox, analytics, storefront, chat)
+- [x] Create logistics database migration (002_logistics_schema.sql)
+- [x] Rewrite types/database.ts for logistics tables
+- [x] Rewrite constants (cargo types, vehicle types, status labels)
+- [x] Add format utils (formatWeight, formatDistance, formatDuration)
+- [x] Rewrite onboarding (role selection + profile + vehicle for carriers)
+- [x] Update middleware for role-based routing
+- [x] Update dashboard layout + role routing
+- [x] Rewrite sidebar (role-aware navigation)
+- [x] Build shipper & carrier layout shells
+- [x] Build all API routes (loads, bids, trips, tracking, vehicles, reviews, addresses, payments)
+- [x] Build shipper pages (dashboard, post-load, loads list, load detail)
+- [x] Build carrier pages (dashboard, load-board, load detail, trips, trip detail, vehicles, earnings)
+- [x] Build settings pages (both roles)
+- [x] Adapt payment routes for trip-based payments
+- [x] Rewrite landing page with logistics messaging
+- [x] Update auth pages (login/signup copy)
+- [x] Fix all TypeScript build errors
+- [x] Build succeeds (29 routes)
+- [x] Git commit & push
+- [ ] **Run 002_logistics_schema.sql in Supabase SQL Editor**
+- [ ] Test end-to-end flow
+- [ ] Verify Vercel deployment
 
 ## Blockers
-- None currently
+- User needs to run `002_logistics_schema.sql` migration in Supabase SQL Editor before the app will work
 
 ## Session Log
 ### Session 1 — 2026-02-20
@@ -115,6 +111,25 @@ PULSE is Africa's Commerce Nervous System — a unified platform with four engin
 - Pushed to GitHub: https://github.com/gitDivine/Pulse
 - Deployed to Vercel: https://pulse-one-mu.vercel.app
 - All environment variables configured on Vercel
-- **What's done**: Full FLOW app deployed and live
-- **What's pending**: Configure Supabase Auth redirect URL to Vercel domain, set NEXT_PUBLIC_APP_URL on Vercel, test end-to-end flows
-- **Next steps**: Test signup → onboarding → dashboard → create product → view storefront → place order
+
+### Session 5 — 2026-02-20 (continued)
+- **Pivoted from FLOW (commerce) to logistics marketplace**
+- Deleted all FLOW commerce code (products, orders, inbox, analytics, storefront, chat)
+- Created 002_logistics_schema.sql migration (new enums, 7 tables, RLS policies, triggers)
+- Rewrote types/database.ts, constants, format utils for logistics
+- Rewrote onboarding: role selection (shipper/carrier) → profile → vehicle (carriers)
+- Updated middleware for role-based routing (shipper → /shipper/*, carrier → /carrier/*)
+- Rewrote sidebar with role-aware navigation
+- Built all API routes: loads, bids, trips, tracking, vehicles, reviews, addresses, payments
+- Built shipper pages: dashboard, post-load (4-step form), loads list, load detail (bid management)
+- Built carrier pages: dashboard, load-board, load detail + bid form, trips, trip detail, vehicles, earnings
+- Built settings pages for both roles
+- Rewrote landing page with logistics messaging
+- Updated auth pages (login/signup)
+- Fixed ~12 TypeScript build errors (Supabase strict types with joins → `as any` casts)
+- Build succeeds: 29 routes (5 static, 24 dynamic)
+- Committed: 57 files changed, 4,389 insertions, 3,397 deletions
+- Pushed to GitHub
+- **What's done**: Complete logistics marketplace codebase — shippers post loads, carriers bid, trips tracked, payments via Paystack
+- **What's pending**: Run migration SQL in Supabase, test end-to-end, verify Vercel deployment
+- **Next steps**: Run `002_logistics_schema.sql` in Supabase SQL Editor → test signup as shipper → post load → signup as carrier → bid → accept → track → deliver

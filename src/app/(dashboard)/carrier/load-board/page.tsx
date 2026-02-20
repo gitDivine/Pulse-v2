@@ -8,10 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { formatNaira, timeAgo, formatWeight } from "@/lib/utils/format";
 import { NIGERIAN_STATES, CARGO_TYPES, LOAD_STATUS_LABELS } from "@/lib/constants";
-import { MapPin, ArrowRight, Package, Star, Calendar, Mail } from "lucide-react";
+import { MapPin, ArrowRight, Package, Star, Calendar, Mail, Check, Undo2 } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoadBoardPage() {
+  const supabase = createClient();
   const [tab, setTab] = useState<"loads" | "invitations">("loads");
   const [loads, setLoads] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
@@ -21,6 +23,7 @@ export default function LoadBoardPage() {
   const [originState, setOriginState] = useState("");
   const [destState, setDestState] = useState("");
   const [cargoType, setCargoType] = useState("");
+  const [myBids, setMyBids] = useState<Record<string, string>>({}); // load_id → bid status
 
   useEffect(() => {
     async function fetchLoads() {
@@ -39,6 +42,29 @@ export default function LoadBoardPage() {
     }
     fetchLoads();
   }, [originState, destState, cargoType]);
+
+  // Fetch carrier's bids to show badges on load cards
+  useEffect(() => {
+    async function fetchMyBids() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("bids")
+        .select("load_id, status")
+        .eq("carrier_id", user.id);
+      if (data) {
+        const map: Record<string, string> = {};
+        for (const bid of data) {
+          // If multiple bids exist (withdrawn + new), prefer the non-withdrawn one
+          if (!map[bid.load_id] || bid.status !== "withdrawn") {
+            map[bid.load_id] = bid.status;
+          }
+        }
+        setMyBids(map);
+      }
+    }
+    fetchMyBids();
+  }, [supabase]);
 
   // Fetch invitations on mount
   useEffect(() => {
@@ -134,6 +160,7 @@ export default function LoadBoardPage() {
                 {loads.map((load, i) => {
                   const shipper = load.profiles;
                   const cargoLabel = CARGO_TYPES.find((c) => c.value === load.cargo_type)?.label || load.cargo_type;
+                  const bidStatus = myBids[load.id];
                   return (
                     <motion.div
                       key={load.id}
@@ -150,6 +177,16 @@ export default function LoadBoardPage() {
                                 {load.origin_city}, {load.origin_state}
                                 <ArrowRight className="h-3 w-3 text-gray-400" />
                                 {load.destination_city}, {load.destination_state}
+                                {bidStatus === "pending" && (
+                                  <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-[10px] ml-auto shrink-0">
+                                    <Check className="h-3 w-3 mr-0.5" />You bid
+                                  </Badge>
+                                )}
+                                {bidStatus === "withdrawn" && (
+                                  <Badge className="bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 text-[10px] ml-auto shrink-0">
+                                    <Undo2 className="h-3 w-3 mr-0.5" />Withdrew
+                                  </Badge>
+                                )}
                               </div>
                               <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                                 <span className="flex items-center gap-1">

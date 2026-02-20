@@ -476,8 +476,8 @@ export default function CarrierDirectoryPage() {
                             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                               {l.origin_city} → {l.destination_city}
                             </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {l.load_number} · {l.cargo_type} {l.budget_amount ? `· ₦${(l.budget_amount / 100).toLocaleString()}` : ""}
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              {l.load_number}{l.cargo_description ? ` — ${l.cargo_description}` : ""} · {l.cargo_type} {l.budget_amount ? `· ₦${(l.budget_amount / 100).toLocaleString()}` : ""}
                             </p>
                           </div>
                         </button>

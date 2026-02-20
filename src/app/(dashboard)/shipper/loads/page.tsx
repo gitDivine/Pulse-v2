@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatNaira, timeAgo } from "@/lib/utils/format";
 import { LOAD_STATUS_LABELS } from "@/lib/constants";
-import { Package, MapPin, ArrowRight } from "lucide-react";
+import { Package, MapPin, ArrowRight, Copy } from "lucide-react";
 import Link from "next/link";
 
 const STATUS_FILTERS = ["all", "posted", "bidding", "accepted", "in_transit", "delivered", "completed", "cancelled"];
@@ -93,7 +93,7 @@ export default function ShipperLoadsPage() {
                   <Link href={`/shipper/loads/${load.id}`}>
                     <Card className="hover:shadow-md transition-shadow cursor-pointer">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 text-sm text-gray-900 dark:text-white font-medium">
                             <MapPin className="h-3.5 w-3.5 text-orange-500 shrink-0" />
                             {load.origin_city}, {load.origin_state}
@@ -101,16 +101,41 @@ export default function ShipperLoadsPage() {
                             {load.destination_city}, {load.destination_state}
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {load.load_number} · {load.cargo_type} · {load.bid_count} bid{load.bid_count !== 1 ? "s" : ""} · {timeAgo(load.created_at)}
+                            {load.load_number}{load.cargo_description ? ` — ${load.cargo_description}` : ""} · {load.cargo_type} · {load.bid_count} bid{load.bid_count !== 1 ? "s" : ""} · {timeAgo(load.created_at)}
                           </p>
                         </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
-                          {load.budget_amount && (
-                            <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                              {formatNaira(load.budget_amount)}
-                            </span>
-                          )}
+                        <div className="flex items-start gap-2">
+                          <Link
+                            href={`/shipper/post-load?${new URLSearchParams({
+                              duplicate: "1",
+                              origin_address: load.origin_address || "",
+                              origin_city: load.origin_city || "",
+                              origin_state: load.origin_state || "",
+                              dest_address: load.destination_address || "",
+                              dest_city: load.destination_city || "",
+                              dest_state: load.destination_state || "",
+                              cargo_type: load.cargo_type || "general",
+                              cargo_description: load.cargo_description || "",
+                              weight_kg: load.weight_kg ? String(load.weight_kg) : "",
+                              quantity: load.quantity ? String(load.quantity) : "1",
+                              special_instructions: load.special_instructions || "",
+                              budget_amount: load.budget_amount ? String(load.budget_amount / 100) : "",
+                              is_negotiable: String(load.is_negotiable ?? true),
+                            })}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors shrink-0"
+                            title="Post Again"
+                          >
+                            <Copy className="h-3.5 w-3.5 text-gray-400 hover:text-orange-500" />
+                          </Link>
+                          <div className="flex flex-col items-end gap-1">
+                            <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+                            {load.budget_amount && (
+                              <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                {formatNaira(load.budget_amount)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </Card>

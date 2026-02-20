@@ -78,8 +78,8 @@ export default function PostLoadPage() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to post load");
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to post load");
       router.push(`/shipper/loads/${data.load.id}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");

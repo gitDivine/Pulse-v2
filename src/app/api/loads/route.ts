@@ -80,7 +80,9 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
 
     return NextResponse.json({ load: data }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Failed to create load" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : JSON.stringify(err);
+    console.error("Create load error:", message);
+    return NextResponse.json({ error: `Failed to create load: ${message}` }, { status: 500 });
   }
 }

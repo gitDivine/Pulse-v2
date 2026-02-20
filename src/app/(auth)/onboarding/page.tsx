@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
@@ -10,13 +10,26 @@ import { Select } from "@/components/ui/select";
 import { NIGERIAN_STATES, VEHICLE_TYPES } from "@/lib/constants";
 import { Truck, Package, ArrowRight, ArrowLeft } from "lucide-react";
 import type { UserRole, VehicleType } from "@/types/database";
+import type { User } from "@supabase/supabase-js";
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [authUser, setAuthUser] = useState<User | null>(null);
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useRef(createClient()).current;
+
+  // Check auth on mount and keep user in state
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        router.push("/login");
+      } else {
+        setAuthUser(user);
+      }
+    });
+  }, [supabase, router]);
 
   // Step 1: Role
   const [role, setRole] = useState<"shipper" | "carrier" | "">("");
@@ -41,8 +54,16 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      // Re-check session in case it was refreshed
+      let user = authUser;
+      if (!user) {
+        const { data } = await supabase.auth.getUser();
+        user = data.user;
+      }
+      if (!user) {
+        router.push("/login");
+        return;
+      }
 
       const { error: profileError } = await supabase.from("profiles").upsert({
         id: user.id,

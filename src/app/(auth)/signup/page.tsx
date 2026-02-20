@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -21,6 +22,10 @@ export default function SignupPage() {
 
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
       return;
     }
 
@@ -65,6 +70,16 @@ export default function SignupPage() {
           onChange={(e) => setPassword(e.target.value)}
           minLength={6}
           required
+        />
+        <Input
+          label="Confirm Password"
+          type="password"
+          placeholder="Re-enter your password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          minLength={6}
+          required
+          error={confirmPassword && password !== confirmPassword ? "Passwords do not match" : undefined}
         />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <Button type="submit" loading={loading} className="w-full">

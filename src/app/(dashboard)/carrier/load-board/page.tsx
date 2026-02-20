@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { formatNaira, timeAgo, formatWeight } from "@/lib/utils/format";
 import { NIGERIAN_STATES, CARGO_TYPES, LOAD_STATUS_LABELS } from "@/lib/constants";
-import { MapPin, ArrowRight, Package, Star, Calendar, Mail, Check, Undo2 } from "lucide-react";
+import { MapPin, ArrowRight, Package, Star, Calendar, Mail, Check, Undo2, UserCircle } from "lucide-react";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import Link from "next/link";
 
@@ -200,8 +200,9 @@ export default function LoadBoardPage() {
                                 <button
                                   type="button"
                                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewUserId(load.shipper_id); }}
-                                  className="text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                                  className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
                                 >
+                                  <UserCircle className="h-3 w-3" />
                                   {shipper?.company_name || shipper?.full_name}
                                 </button>
                                 {shipper?.avg_rating > 0 && (
@@ -286,9 +287,14 @@ export default function LoadBoardPage() {
                               {load?.weight_kg && <span>· {formatWeight(load.weight_kg)}</span>}
                             </div>
                             <div className="flex items-center gap-2 mt-1.5 text-xs">
-                              <span className="text-gray-500 dark:text-gray-400">
+                              <button
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewUserId(inv.loads?.shipper_id); }}
+                                className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                              >
+                                <UserCircle className="h-3 w-3" />
                                 {shipper?.company_name || shipper?.full_name}
-                              </span>
+                              </button>
                               {shipper?.avg_rating > 0 && (
                                 <span className="flex items-center gap-0.5 text-yellow-600">
                                   <Star className="h-3 w-3 fill-current" />

@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatNaira, timeAgo } from "@/lib/utils/format";
 import { BID_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, ArrowRight, Package, Gavel } from "lucide-react";
+import { MapPin, ArrowRight, Package, Gavel, UserCircle } from "lucide-react";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import Link from "next/link";
 
@@ -125,8 +125,9 @@ export default function CarrierBidsPage() {
                             <button
                               type="button"
                               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewUserId(load?.shipper_id); }}
-                              className="text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                              className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
                             >
+                              <UserCircle className="h-3 w-3" />
                               {shipper?.company_name || shipper?.full_name}
                             </button>
                             <span className="text-gray-400">· {timeAgo(bid.created_at)}</span>

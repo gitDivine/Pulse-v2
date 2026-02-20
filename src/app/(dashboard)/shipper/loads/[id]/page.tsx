@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { formatNaira, timeAgo, formatWeight, formatDuration } from "@/lib/utils/format";
 import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISPUTE_STATUS_LABELS } from "@/lib/constants";
 import { Select } from "@/components/ui/select";
-import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCircle, Users, AlertTriangle, Upload, X, MessageSquare, ShieldCheck, ShieldAlert } from "lucide-react";
+import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCircle, Users, AlertTriangle, Upload, X, MessageSquare, ShieldCheck, ShieldAlert, UserCircle } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import Link from "next/link";
@@ -593,8 +593,9 @@ export default function LoadDetailPage() {
                         <button
                           type="button"
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewUserId(bid.carrier_id); }}
-                          className="text-sm font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors text-left"
+                          className="flex items-center gap-1 text-sm font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors text-left"
                         >
+                          <UserCircle className="h-3.5 w-3.5 text-gray-400 shrink-0" />
                           {carrier?.company_name || carrier?.full_name || "Unknown Carrier"}
                         </button>
                         <div className="flex items-center gap-2 mt-0.5">

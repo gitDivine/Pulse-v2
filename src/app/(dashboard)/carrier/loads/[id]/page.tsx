@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatNaira, timeAgo, formatWeight } from "@/lib/utils/format";
 import { LOAD_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, Package, Star, Send, XCircle, ArrowRight } from "lucide-react";
+import { MapPin, Package, Star, Send, XCircle, ArrowRight, UserCircle } from "lucide-react";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import { useToast } from "@/components/ui/toast";
 
@@ -230,8 +230,9 @@ export default function CarrierLoadDetailPage() {
               <button
                 type="button"
                 onClick={() => setPreviewUserId(load.shipper_id)}
-                className="font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                className="flex items-center gap-1.5 font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
               >
+                <UserCircle className="h-4 w-4 text-gray-400" />
                 {shipper?.company_name || shipper?.full_name}
               </button>
               {shipper?.avg_rating > 0 && (

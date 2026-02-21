@@ -110,6 +110,16 @@ html {
   background: #333;
 }
 
+/* Native select option styling */
+select option {
+  color: #111827;
+  background-color: #ffffff;
+}
+.dark select option {
+  color: #f3f4f6;
+  background-color: #1a1a1a;
+}
+
 /* Focus ring */
 *:focus-visible {
   outline: 2px solid #f97316;

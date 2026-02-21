@@ -6,8 +6,8 @@ import { Topbar } from "@/components/dashboard/topbar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatNaira, timeAgo } from "@/lib/utils/format";
-import { BID_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, ArrowRight, Package, Gavel, UserCircle } from "lucide-react";
+import { BID_STATUS_LABELS, TRIP_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
+import { MapPin, ArrowRight, Package, Gavel, UserCircle, Truck } from "lucide-react";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import Link from "next/link";
 
@@ -85,8 +85,13 @@ export default function CarrierBidsPage() {
             {bids.map((bid, i) => {
               const load = bid.loads;
               const shipper = load?.profiles;
-              const statusInfo = BID_STATUS_LABELS[bid.status] || { label: bid.status, color: "bg-gray-100 text-gray-800" };
+              const trip = Array.isArray(load?.trips) ? load.trips[0] : load?.trips;
+              const hasTrip = bid.status === "accepted" && trip;
+              const statusInfo = hasTrip
+                ? TRIP_STATUS_LABELS[trip.status] || { label: trip.status, color: "bg-gray-100 text-gray-800" }
+                : BID_STATUS_LABELS[bid.status] || { label: bid.status, color: "bg-gray-100 text-gray-800" };
               const cargoLabel = CARGO_TYPES.find((c) => c.value === load?.cargo_type)?.label || load?.cargo_type;
+              const href = hasTrip ? `/carrier/trips/${trip.id}` : `/carrier/loads/${load?.id}`;
 
               return (
                 <motion.div
@@ -95,7 +100,7 @@ export default function CarrierBidsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
                 >
-                  <Link href={`/carrier/loads/${load?.id}`}>
+                  <Link href={href}>
                     <Card className={`hover:shadow-md transition-all cursor-pointer ${
                       bid.status === "accepted"
                         ? "border-green-200 dark:border-green-500/20 hover:border-green-300 dark:hover:border-green-500/30"
@@ -118,6 +123,12 @@ export default function CarrierBidsPage() {
                               <Package className="h-3 w-3" />
                               {cargoLabel}
                             </span>
+                            {hasTrip && (
+                              <span className="flex items-center gap-1 text-orange-500">
+                                <Truck className="h-3 w-3" />
+                                {trip.trip_number}
+                              </span>
+                            )}
                           </div>
 
                           {/* Shipper + time */}

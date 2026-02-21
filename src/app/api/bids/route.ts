@@ -20,7 +20,10 @@ export async function GET(request: NextRequest) {
       .from("bids")
       .select(`
         id, load_id, vehicle_id, amount, estimated_hours, message, status, created_at,
-        loads(id, shipper_id, load_number, origin_city, origin_state, destination_city, destination_state, cargo_type, weight_kg, budget_amount, status, pickup_date, profiles!loads_shipper_id_fkey(full_name, company_name))
+        loads(id, shipper_id, load_number, origin_city, origin_state, destination_city, destination_state, cargo_type, weight_kg, budget_amount, status, pickup_date,
+          profiles!loads_shipper_id_fkey(full_name, company_name),
+          trips(id, status, trip_number)
+        )
       `)
       .eq("carrier_id", user.id)
       .order("created_at", { ascending: false })

@@ -12,13 +12,27 @@ export async function GET(
 
     const { data, error } = await supabase
       .from("bids")
-      .select("*, profiles!bids_carrier_id_fkey(full_name, company_name, avg_rating, total_reviews, availability_status)")
+      .select("*, profiles!bids_carrier_id_fkey(full_name, company_name, avg_rating, total_reviews, availability_status, last_active_at)")
       .eq("load_id", id)
       .order("created_at", { ascending: true });
 
     if (error) throw error;
 
-    return NextResponse.json({ bids: data });
+    // Override availability to "offline" if carrier inactive >30 min
+    const STALE_MS = 30 * 60 * 1000;
+    const now = Date.now();
+    const bids = (data || []).map((b: any) => {
+      const p = b.profiles;
+      if (p && (p.availability_status === "available" || p.availability_status === "busy")) {
+        const lastActive = p.last_active_at ? new Date(p.last_active_at).getTime() : 0;
+        if (now - lastActive > STALE_MS) {
+          return { ...b, profiles: { ...p, availability_status: "offline" } };
+        }
+      }
+      return b;
+    });
+
+    return NextResponse.json({ bids });
   } catch {
     return NextResponse.json({ error: "Failed to fetch bids" }, { status: 500 });
   }

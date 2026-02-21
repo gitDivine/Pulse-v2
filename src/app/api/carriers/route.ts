@@ -87,10 +87,18 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const carriers = (data || []).map((c: any) => ({
-      ...c,
-      vehicle_types: vehicleMap[c.id] || [],
-    }));
+    const STALE_MS = 30 * 60 * 1000; // 30 minutes
+    const now = Date.now();
+
+    const carriers = (data || []).map((c: any) => {
+      // Override to "offline" if last_active_at is stale (>30 min)
+      let status = c.availability_status;
+      if (status === "available" || status === "busy") {
+        const lastActive = c.last_active_at ? new Date(c.last_active_at).getTime() : 0;
+        if (now - lastActive > STALE_MS) status = "offline";
+      }
+      return { ...c, availability_status: status, vehicle_types: vehicleMap[c.id] || [] };
+    });
 
     return NextResponse.json({ carriers, total: count });
   } catch {

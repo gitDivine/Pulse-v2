@@ -98,6 +98,14 @@ export async function PATCH(
       await serviceSupabase.from("loads").update({ status: "in_transit" as any }).eq("id", t.load_id);
     } else if (status === "delivered") {
       await serviceSupabase.from("loads").update({ status: "delivered" as any }).eq("id", t.load_id);
+
+      // Auto-set carrier back to available (only if busy, not if hidden)
+      serviceSupabase
+        .from("profiles")
+        .update({ availability_status: "available" } as any)
+        .eq("id", t.carrier_id)
+        .eq("availability_status", "busy")
+        .then(() => {});
     } else if (status === "confirmed") {
       await serviceSupabase.from("loads").update({ status: "completed" as any }).eq("id", t.load_id);
 

@@ -91,9 +91,10 @@ export async function GET(request: NextRequest) {
     const now = Date.now();
 
     const carriers = (data || []).map((c: any) => {
-      // Override to "offline" if last_active_at is stale (>30 min)
+      // Override "available" → "offline" if inactive >30 min
+      // "busy" is trip-triggered (DB trigger) so it stays regardless of app activity
       let status = c.availability_status;
-      if (status === "available" || status === "busy") {
+      if (status === "available") {
         const lastActive = c.last_active_at ? new Date(c.last_active_at).getTime() : 0;
         if (now - lastActive > STALE_MS) status = "offline";
       }

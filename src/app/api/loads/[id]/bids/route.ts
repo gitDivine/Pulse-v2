@@ -18,12 +18,13 @@ export async function GET(
 
     if (error) throw error;
 
-    // Override availability to "offline" if carrier inactive >30 min
+    // Override "available" → "offline" if inactive >30 min
+    // "busy" = on active trip (DB trigger), stays regardless of app activity
     const STALE_MS = 30 * 60 * 1000;
     const now = Date.now();
     const bids = (data || []).map((b: any) => {
       const p = b.profiles;
-      if (p && (p.availability_status === "available" || p.availability_status === "busy")) {
+      if (p?.availability_status === "available") {
         const lastActive = p.last_active_at ? new Date(p.last_active_at).getTime() : 0;
         if (now - lastActive > STALE_MS) {
           return { ...b, profiles: { ...p, availability_status: "offline" } };

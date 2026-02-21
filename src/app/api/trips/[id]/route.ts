@@ -9,8 +9,11 @@ export async function GET(
   try {
     const { id } = await params;
     const supabase = await createServerSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data, error } = await supabase
+    const serviceSupabase = await createServiceRoleSupabase();
+    const { data, error } = await serviceSupabase
       .from("trips")
       .select(`
         *,
@@ -27,7 +30,21 @@ export async function GET(
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ trip: data });
+    const trip = data as any;
+
+    // Fallback: if shipper profile wasn't resolved through the join, fetch separately
+    if (trip.loads && !trip.loads.profiles && trip.loads.shipper_id) {
+      const { data: shipperProfile } = await serviceSupabase
+        .from("profiles")
+        .select("full_name, company_name, phone, avg_rating")
+        .eq("id", trip.loads.shipper_id)
+        .single();
+      if (shipperProfile) {
+        trip.loads.profiles = shipperProfile;
+      }
+    }
+
+    return NextResponse.json({ trip });
   } catch {
     return NextResponse.json({ error: "Failed to fetch trip" }, { status: 500 });
   }

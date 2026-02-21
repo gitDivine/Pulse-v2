@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/toast";
 import { MapPin, Truck, CheckCircle, ArrowRight, Clock, ShieldAlert, MessageSquare, Send, UserCircle, Star, Phone, AlertTriangle, X } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
+import { TripChat } from "@/components/dashboard/trip-chat";
 
 const TRIP_FLOW = ["pending", "pickup", "in_transit", "delivered", "confirmed"];
 
@@ -374,6 +375,9 @@ export default function TripDetailPage() {
             </div>
           </Card>
         )}
+
+        {/* Chat */}
+        <TripChat tripId={id} />
 
         {/* Tracking Timeline */}
         {events.length > 0 && (

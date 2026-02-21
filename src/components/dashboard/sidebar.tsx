@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -54,6 +55,22 @@ export function Sidebar({ userName, companyName, role, onNavigate }: SidebarProp
   const { theme, toggleTheme } = useTheme();
 
   const navItems = role === "shipper" ? shipperNavItems : carrierNavItems;
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/trips/unread")
+      .then((r) => r.json())
+      .then((data) => setUnreadMessages(data.total || 0))
+      .catch(() => {});
+    // Poll every 30s
+    const interval = setInterval(() => {
+      fetch("/api/trips/unread")
+        .then((r) => r.json())
+        .then((data) => setUnreadMessages(data.total || 0))
+        .catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -112,6 +129,14 @@ export function Sidebar({ userName, companyName, role, onNavigate }: SidebarProp
                 )}
                 <Icon className="h-[18px] w-[18px]" />
                 {item.label}
+                {unreadMessages > 0 && (
+                  (role === "carrier" && item.href === "/carrier/trips") ||
+                  (role === "shipper" && item.href === "/shipper/loads")
+                ) && (
+                  <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                    {unreadMessages}
+                  </span>
+                )}
               </motion.div>
             </Link>
           );

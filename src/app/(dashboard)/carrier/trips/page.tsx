@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatNaira, timeAgo } from "@/lib/utils/format";
 import { TRIP_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, ArrowRight, Truck, UserCircle } from "lucide-react";
+import { MapPin, ArrowRight, Truck, UserCircle, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
 const STATUS_FILTERS = ["all", "pending", "pickup", "in_transit", "delivered", "confirmed", "disputed"];
@@ -16,6 +16,7 @@ export default function CarrierTripsPage() {
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
     async function fetchTrips() {
@@ -28,6 +29,14 @@ export default function CarrierTripsPage() {
     setLoading(true);
     fetchTrips();
   }, [filter]);
+
+  // Fetch unread message counts
+  useEffect(() => {
+    fetch("/api/trips/unread")
+      .then((r) => r.json())
+      .then((data) => setUnreadMap(data.trips || {}))
+      .catch(() => {});
+  }, []);
 
   return (
     <div>
@@ -110,6 +119,12 @@ export default function CarrierTripsPage() {
                           <span className="text-sm font-semibold text-gray-900 dark:text-white">
                             {formatNaira(trip.agreed_amount)}
                           </span>
+                          {unreadMap[trip.id] > 0 && (
+                            <span className="flex items-center gap-1 text-[10px] font-medium text-red-500">
+                              <MessageSquare className="h-3 w-3" />
+                              {unreadMap[trip.id]}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </Card>

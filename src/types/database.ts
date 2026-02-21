@@ -439,6 +439,27 @@ export interface Database {
         };
         Relationships: [];
       };
+      trip_messages: {
+        Row: {
+          id: string;
+          trip_id: string;
+          sender_id: string;
+          body: string;
+          image_url: string | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          trip_id: string;
+          sender_id: string;
+          body: string;
+          image_url?: string | null;
+        };
+        Update: {
+          read_at?: string | null;
+        };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           id: string;

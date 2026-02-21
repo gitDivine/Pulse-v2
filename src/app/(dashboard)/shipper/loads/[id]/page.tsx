@@ -15,6 +15,7 @@ import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCi
 import { useToast } from "@/components/ui/toast";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import Link from "next/link";
+import { TripChat } from "@/components/dashboard/trip-chat";
 
 export default function LoadDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -394,6 +395,9 @@ export default function LoadDetailPage() {
             </div>
           </Card>
         )}
+
+        {/* Chat — only when a trip exists */}
+        {trip && <TripChat tripId={trip.id} />}
 
         {/* Delivery confirmation + dispute */}
         {load.status === "delivered" && !showDisputeForm && (

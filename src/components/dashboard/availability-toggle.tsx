@@ -12,11 +12,25 @@ export function AvailabilityToggle({ initialStatus }: { initialStatus: string })
   const [status, setStatus] = useState(initialStatus);
   const [updating, setUpdating] = useState(false);
 
-  // Sync with server on mount (in case server-rendered value is stale)
+  // Sync with server on mount + auto-set "available" when carrier is in the app
   useEffect(() => {
     fetch("/api/carrier/availability")
       .then((r) => r.json())
-      .then((data) => { if (data.status) setStatus(data.status); })
+      .then(async (data) => {
+        if (!data.status) return;
+        setStatus(data.status);
+        // Auto-promote offline → available when carrier opens the app
+        if (data.status === "offline") {
+          try {
+            const res = await fetch("/api/carrier/availability", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: "available" }),
+            });
+            if (res.ok) setStatus("available");
+          } catch { /* silent — manual toggle still works */ }
+        }
+      })
       .catch(() => {});
   }, []);
 

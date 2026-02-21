@@ -13,12 +13,20 @@ export async function GET() {
     const serviceSupabase = createServiceRoleSupabase();
     const { data, error } = await serviceSupabase
       .from("profiles")
-      .select("availability_status, last_active_at")
+      .select("availability_status, last_active_at, role")
       .eq("id", user.id)
       .single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Touch last_active_at on every fetch (carrier is in the app)
+    if (data?.role === "carrier") {
+      await serviceSupabase
+        .from("profiles")
+        .update({ last_active_at: new Date().toISOString() } as any)
+        .eq("id", user.id);
     }
 
     return NextResponse.json({

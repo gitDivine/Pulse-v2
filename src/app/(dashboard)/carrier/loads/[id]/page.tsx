@@ -187,10 +187,12 @@ export default function CarrierLoadDetailPage() {
               <div>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{load.origin_address}</p>
                 <p className="text-xs text-gray-500">{load.origin_city}, {load.origin_state}</p>
+                {load.origin_landmark && <p className="text-xs text-gray-400">Near: {load.origin_landmark}</p>}
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{load.destination_address}</p>
                 <p className="text-xs text-gray-500">{load.destination_city}, {load.destination_state}</p>
+                {load.destination_landmark && <p className="text-xs text-gray-400">Near: {load.destination_landmark}</p>}
               </div>
             </div>
           </div>
@@ -218,10 +220,15 @@ export default function CarrierLoadDetailPage() {
               {load.budget_amount && (
                 <div className="flex justify-between">
                   <span className="text-gray-500 dark:text-gray-400">Budget</span>
-                  <span className="font-bold text-orange-600">{formatNaira(load.budget_amount)}</span>
+                  <span className="font-bold text-orange-600">
+                    {formatNaira(load.budget_amount)} {load.is_negotiable && "(negotiable)"}
+                  </span>
                 </div>
               )}
             </div>
+            {load.cargo_description && (
+              <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{load.cargo_description}</p>
+            )}
           </Card>
 
           <Card>

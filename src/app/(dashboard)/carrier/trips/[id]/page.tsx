@@ -218,10 +218,12 @@ export default function TripDetailPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">{load.origin_address}</p>
                   <p className="text-xs text-gray-500">{load.origin_city}, {load.origin_state}</p>
+                  {load.origin_landmark && <p className="text-xs text-gray-400">Near: {load.origin_landmark}</p>}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">{load.destination_address}</p>
                   <p className="text-xs text-gray-500">{load.destination_city}, {load.destination_state}</p>
+                  {load.destination_landmark && <p className="text-xs text-gray-400">Near: {load.destination_landmark}</p>}
                 </div>
               </div>
             </div>
@@ -229,6 +231,14 @@ export default function TripDetailPage() {
               <span>{cargoLabel}</span>
               {load.weight_kg && <span>{load.weight_kg}kg</span>}
             </div>
+            {load.cargo_description && (
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{load.cargo_description}</p>
+            )}
+            {load.special_instructions && (
+              <p className="mt-2 text-sm text-orange-600 dark:text-orange-400">
+                Note: {load.special_instructions}
+              </p>
+            )}
           </Card>
         )}
 

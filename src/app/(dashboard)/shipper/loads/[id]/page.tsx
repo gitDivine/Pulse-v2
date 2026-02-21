@@ -9,7 +9,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatNaira, timeAgo, formatWeight, formatDuration } from "@/lib/utils/format";
-import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISPUTE_STATUS_LABELS } from "@/lib/constants";
+import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, TRIP_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISPUTE_STATUS_LABELS } from "@/lib/constants";
 import { Select } from "@/components/ui/select";
 import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCircle, Users, AlertTriangle, Upload, X, MessageSquare, ShieldCheck, ShieldAlert, UserCircle } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
@@ -33,6 +33,8 @@ export default function LoadDetailPage() {
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const [confirmDisputedDelivery, setConfirmDisputedDelivery] = useState(false);
   const [confirmDelivery, setConfirmDelivery] = useState(false);
+  const [confirmAcceptBid, setConfirmAcceptBid] = useState<string | null>(null);
+  const [trip, setTrip] = useState<any>(null);
   const supabase = createClient();
   const { toast } = useToast();
 
@@ -48,14 +50,15 @@ export default function LoadDetailPage() {
       setBids(bidsData.bids || []);
       setLoading(false);
 
-      // Check for existing dispute via the trip
-      const { data: trip } = await supabase
+      // Fetch trip and dispute info
+      const { data: tripData } = await supabase
         .from("trips")
-        .select("id")
+        .select("id, status, trip_number")
         .eq("load_id", id)
         .single();
-      if (trip) {
-        const disputeRes = await fetch(`/api/disputes?trip_id=${trip.id}`);
+      if (tripData) {
+        setTrip(tripData);
+        const disputeRes = await fetch(`/api/disputes?trip_id=${tripData.id}`);
         const disputeData = await disputeRes.json();
         if (disputeData.disputes?.length > 0) {
           setDispute(disputeData.disputes[0]);
@@ -95,34 +98,29 @@ export default function LoadDetailPage() {
   async function handleConfirmDelivery() {
     setActionLoading("confirm");
     try {
-      // Find the trip for this load
-      const { data: trips } = await supabase
-        .from("trips")
-        .select("id")
-        .eq("load_id", id)
-        .single();
+      if (!trip) return;
 
-      if (trips) {
-        await fetch(`/api/trips/${trips.id}`, {
+      await fetch(`/api/trips/${trip.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "confirmed" }),
+      });
+
+      // Auto-resolve any open dispute on this trip (redelivery accepted)
+      if (dispute && dispute.status !== "resolved") {
+        await fetch(`/api/disputes/${dispute.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "confirmed" }),
+          body: JSON.stringify({ action: "resolve", resolution_note: "Redelivery accepted — delivery confirmed" }),
         });
-
-        // Auto-resolve any open dispute on this trip (redelivery accepted)
-        if (dispute && dispute.status !== "resolved") {
-          await fetch(`/api/disputes/${dispute.id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "resolve", resolution_note: "Redelivery accepted — delivery confirmed" }),
-          });
-          setDispute((prev: any) => prev ? { ...prev, status: "resolved" } : null);
-        }
-
-        // Refresh
-        const loadRes = await fetch(`/api/loads/${id}`);
-        setLoad((await loadRes.json()).load);
+        setDispute((prev: any) => prev ? { ...prev, status: "resolved" } : null);
       }
+
+      setTrip((prev: any) => prev ? { ...prev, status: "confirmed" } : null);
+
+      // Refresh
+      const loadRes = await fetch(`/api/loads/${id}`);
+      setLoad((await loadRes.json()).load);
     } finally {
       setActionLoading(null);
     }
@@ -381,6 +379,21 @@ export default function LoadDetailPage() {
             </p>
           )}
         </Card>
+
+        {/* Trip progress (visible when a trip exists and not yet confirmed/completed) */}
+        {trip && !["confirmed", "completed"].includes(load.status) && (
+          <Card className="border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Truck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <p className="font-medium text-gray-900 dark:text-white text-sm">Trip Progress</p>
+              </div>
+              <Badge className={TRIP_STATUS_LABELS[trip.status]?.color || "bg-gray-100 text-gray-800"}>
+                {TRIP_STATUS_LABELS[trip.status]?.label || trip.status}
+              </Badge>
+            </div>
+          </Card>
+        )}
 
         {/* Delivery confirmation + dispute */}
         {load.status === "delivered" && !showDisputeForm && (
@@ -714,25 +727,56 @@ export default function LoadDetailPage() {
                     </div>
 
                     {bid.status === "pending" && load.status !== "accepted" && load.status !== "completed" && (
-                      <div className="flex gap-2 mt-3">
-                        <Button
-                          size="sm"
-                          onClick={() => handleBidAction(bid.id, "accepted")}
-                          loading={actionLoading === bid.id}
-                          className="flex-1"
-                        >
-                          Accept Bid
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleBidAction(bid.id, "rejected")}
-                          loading={actionLoading === bid.id}
-                          className="flex-1"
-                        >
-                          Reject
-                        </Button>
-                      </div>
+                      confirmAcceptBid === bid.id ? (
+                        <div className="mt-3 rounded-lg bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 p-3">
+                          <div className="flex items-start gap-2 mb-2">
+                            <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                                Accept this bid for {formatNaira(bid.amount)}?
+                              </p>
+                              <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-0.5">
+                                A trip will be created and all other pending bids will be rejected. This cannot be undone.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => { setConfirmAcceptBid(null); handleBidAction(bid.id, "accepted"); }}
+                              loading={actionLoading === bid.id}
+                            >
+                              Yes, accept bid
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setConfirmAcceptBid(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 mt-3">
+                          <Button
+                            size="sm"
+                            onClick={() => setConfirmAcceptBid(bid.id)}
+                            className="flex-1"
+                          >
+                            Accept Bid
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleBidAction(bid.id, "rejected")}
+                            loading={actionLoading === bid.id}
+                            className="flex-1"
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      )
                     )}
                   </motion.div>
                 );

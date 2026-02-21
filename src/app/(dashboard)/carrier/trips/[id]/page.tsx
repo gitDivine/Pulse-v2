@@ -14,6 +14,7 @@ import { MapPin, Truck, CheckCircle, ArrowRight, Clock, ShieldAlert, MessageSqua
 import { AnimatePresence } from "framer-motion";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import { TripChat } from "@/components/dashboard/trip-chat";
+import { TripReview } from "@/components/dashboard/trip-review";
 
 const TRIP_FLOW = ["pending", "pickup", "in_transit", "delivered", "confirmed"];
 
@@ -383,6 +384,11 @@ export default function TripDetailPage() {
               </div>
             </div>
           </Card>
+        )}
+
+        {/* Review — after trip is confirmed */}
+        {trip.status === "confirmed" && load?.shipper_id && (
+          <TripReview tripId={id} revieweeId={load.shipper_id} revieweeLabel="shipper" />
         )}
 
         {/* Chat */}

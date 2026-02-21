@@ -16,6 +16,7 @@ import { useToast } from "@/components/ui/toast";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import Link from "next/link";
 import { TripChat } from "@/components/dashboard/trip-chat";
+import { TripReview } from "@/components/dashboard/trip-review";
 
 export default function LoadDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -54,7 +55,7 @@ export default function LoadDetailPage() {
       // Fetch trip and dispute info
       const { data: tripData } = await supabase
         .from("trips")
-        .select("id, status, trip_number, agreed_amount, platform_fee, total_amount")
+        .select("id, status, trip_number, carrier_id, agreed_amount, platform_fee, total_amount")
         .eq("load_id", id)
         .single();
       if (tripData) {
@@ -437,6 +438,11 @@ export default function LoadDetailPage() {
               </div>
             </div>
           </Card>
+        )}
+
+        {/* Review — after trip is confirmed */}
+        {trip && (load.status === "completed" || trip.status === "confirmed") && trip.carrier_id && (
+          <TripReview tripId={trip.id} revieweeId={trip.carrier_id} revieweeLabel="carrier" />
         )}
 
         {/* Delivery confirmation + dispute */}

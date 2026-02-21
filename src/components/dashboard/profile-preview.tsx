@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { VEHICLE_TYPES, VERIFICATION_LABELS } from "@/lib/constants";
+import { timeAgo } from "@/lib/utils/format";
 import {
   X, MapPin, Phone, Star, Truck, Shield, Calendar,
   Package, CheckCircle, Building2,
@@ -16,14 +17,21 @@ interface ProfilePreviewProps {
 
 export function ProfilePreview({ userId, onClose }: ProfilePreviewProps) {
   const [profile, setProfile] = useState<any>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!userId) return;
     setLoading(true);
-    fetch(`/api/profiles/${userId}`)
-      .then((r) => r.json())
-      .then((data) => setProfile(data.profile))
+    setReviews([]);
+    Promise.all([
+      fetch(`/api/profiles/${userId}`).then((r) => r.json()),
+      fetch(`/api/reviews?reviewee_id=${userId}`).then((r) => r.json()),
+    ])
+      .then(([profileData, reviewsData]) => {
+        setProfile(profileData.profile);
+        setReviews(reviewsData.reviews || []);
+      })
       .catch(() => setProfile(null))
       .finally(() => setLoading(false));
   }, [userId]);
@@ -210,11 +218,50 @@ export function ProfilePreview({ userId, onClose }: ProfilePreviewProps) {
                   </div>
                 )}
 
-                {/* Reviews placeholder */}
+                {/* Reviews */}
                 <div className="mt-4 pt-3 border-t border-gray-100 dark:border-white/5">
-                  <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
-                    Reviews coming soon
-                  </p>
+                  {reviews.length > 0 ? (
+                    <>
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                        Recent Reviews
+                      </p>
+                      <div className="space-y-2.5 max-h-40 overflow-y-auto">
+                        {reviews.slice(0, 5).map((review) => (
+                          <div key={review.id} className="text-sm">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`h-3 w-3 ${
+                                      s <= review.rating
+                                        ? "fill-yellow-400 text-yellow-400"
+                                        : "text-gray-200 dark:text-gray-700"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-[11px] text-gray-400 dark:text-gray-500">
+                                {timeAgo(review.created_at)}
+                              </span>
+                            </div>
+                            {review.comment && (
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
+                                {review.comment}
+                              </p>
+                            )}
+                            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+                              — {review.profiles?.company_name || review.profiles?.full_name || "User"}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+                      No reviews yet
+                    </p>
+                  )}
                 </div>
               </div>
             )}

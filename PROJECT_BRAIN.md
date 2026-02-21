@@ -264,3 +264,21 @@ PULSE is Africa's Logistics Nervous System — a two-sided freight marketplace c
 - Extensibility: add one object to the role's array in `tour-steps.ts` — progress dots, navigation, step count auto-adjust
 - Build passes: 0 errors
 - **What's done**: Complete guided tour system — auto-shows for new users, replayable from settings, role-specific steps
+
+- **Reviews & Ratings**: both parties can rate each other after trip is confirmed
+- Added GET endpoint to reviews API: fetch by `reviewee_id` (profile previews) or `trip_id` (check existing review). POST now validates rating 1-5 and returns 409 on duplicate
+- Created `src/components/dashboard/trip-review.tsx`: reusable component with interactive star picker (1-5, hover labels), optional comment, shows existing review if already submitted
+- Modified shipper load detail: review card appears when trip is confirmed — shipper rates carrier
+- Modified carrier trip detail: review card appears when trip is confirmed — carrier rates shipper
+- Replaced "Reviews coming soon" stub in ProfilePreview with real reviews: fetches up to 10 recent reviews, shows stars + comment + reviewer name + time ago
+- Reviews are final (no edit/delete) — standard marketplace pattern
+- DB trigger auto-updates `avg_rating` and `total_reviews` on profiles (already existed in migration)
+- Build passes: 0 errors
+- **What's done**: Full bidirectional review system — rate after delivery, visible on all profile previews
+
+- **Clickable Rating cards on both dashboards**: Rating stat on shipper + carrier dashboards now opens an overlay showing all received reviews with reviewer names
+- Created `src/components/dashboard/rating-card.tsx`: client component — stat card (same style as other dashboard stats) + bottom sheet overlay on click. Fetches reviews on first open, shows rating stars, comments, reviewer names, skeleton loading
+- Modified shipper dashboard: added profile query for `avg_rating, total_reviews`, replaced "Total Bids" stat with RatingCard. Now shows: Active Loads, Completed, Total Spend, Rating
+- Modified carrier dashboard: replaced static Rating stat with RatingCard. Same 4-stat grid, but Rating is now clickable
+- Consistent overlay pattern across both roles — matches ProfilePreview design (bottom sheet on mobile, centered on desktop)
+- Build passes: 0 errors

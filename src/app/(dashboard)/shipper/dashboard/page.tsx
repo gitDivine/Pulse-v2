@@ -7,45 +7,45 @@ import { LOAD_STATUS_LABELS } from "@/lib/constants";
 import {
   Package,
   Banknote,
-  TrendingUp,
   Truck,
 } from "lucide-react";
 import Link from "next/link";
+import { RatingCard } from "@/components/dashboard/rating-card";
 
 export default async function ShipperDashboardPage() {
   const supabase = await createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [loadsRes, tripsRes, recentLoadsRes] = await Promise.all([
+  const [loadsRes, recentLoadsRes, profileRes] = await Promise.all([
     supabase
       .from("loads")
       .select("id, status, budget_amount, bid_count")
       .eq("shipper_id", user!.id),
-    supabase
-      .from("trips")
-      .select("id, agreed_amount, status")
-      .eq("load_id", user!.id), // will get via loads join below
     supabase
       .from("loads")
       .select("id, load_number, origin_city, origin_state, destination_city, destination_state, cargo_type, status, budget_amount, bid_count, created_at")
       .eq("shipper_id", user!.id)
       .order("created_at", { ascending: false })
       .limit(5),
+    supabase
+      .from("profiles")
+      .select("avg_rating, total_reviews")
+      .eq("id", user!.id)
+      .single(),
   ]);
 
   const loads = loadsRes.data || [];
   const recentLoads = recentLoadsRes.data || [];
+  const profile = profileRes.data;
 
   const activeLoads = loads.filter((l) => ["posted", "bidding", "accepted", "in_transit"].includes(l.status)).length;
   const completedLoads = loads.filter((l) => l.status === "completed").length;
-  const totalBids = loads.reduce((sum, l) => sum + (l.bid_count || 0), 0);
   const totalSpend = loads
     .filter((l) => l.status === "completed")
     .reduce((sum, l) => sum + (l.budget_amount || 0), 0);
 
   const stats = [
     { label: "Active Loads", value: activeLoads.toString(), icon: Package, color: "text-blue-600 bg-blue-50 dark:bg-blue-900/20" },
-    { label: "Total Bids", value: totalBids.toString(), icon: TrendingUp, color: "text-orange-600 bg-orange-50 dark:bg-orange-900/20" },
     { label: "Completed", value: completedLoads.toString(), icon: Truck, color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" },
     { label: "Total Spend", value: formatNaira(totalSpend), icon: Banknote, color: "text-purple-600 bg-purple-50 dark:bg-purple-900/20" },
   ];
@@ -73,6 +73,11 @@ export default async function ShipperDashboardPage() {
               </Card>
             );
           })}
+          <RatingCard
+            userId={user!.id}
+            avgRating={profile?.avg_rating ?? null}
+            totalReviews={profile?.total_reviews ?? 0}
+          />
         </div>
 
         {/* Quick action */}

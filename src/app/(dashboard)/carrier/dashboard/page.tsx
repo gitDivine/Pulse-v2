@@ -8,11 +8,11 @@ import {
   Search,
   Truck,
   Banknote,
-  Star,
   UserCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { AvailabilityToggle } from "@/components/dashboard/availability-toggle";
+import { RatingCard } from "@/components/dashboard/rating-card";
 
 export default async function CarrierDashboardPage() {
   const supabase = await createServerSupabase();
@@ -79,7 +79,6 @@ export default async function CarrierDashboardPage() {
     { label: "Available Loads", value: availableCount.toString(), icon: Search, color: "text-blue-600 bg-blue-50 dark:bg-blue-900/20" },
     { label: "Active Trips", value: activeTrips.toString(), icon: Truck, color: "text-orange-600 bg-orange-50 dark:bg-orange-900/20" },
     { label: "Total Earnings", value: formatNaira(totalEarnings), icon: Banknote, color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" },
-    { label: "Rating", value: profile?.avg_rating ? `${profile.avg_rating.toFixed(1)} (${profile.total_reviews})` : "No reviews", icon: Star, color: "text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20" },
   ];
 
   return (
@@ -111,6 +110,11 @@ export default async function CarrierDashboardPage() {
               </Card>
             );
           })}
+          <RatingCard
+            userId={user!.id}
+            avgRating={profile?.avg_rating ?? null}
+            totalReviews={profile?.total_reviews ?? 0}
+          />
         </div>
 
         {/* Find loads CTA */}

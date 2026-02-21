@@ -32,6 +32,7 @@ export default function LoadDetailPage() {
   const [uploading, setUploading] = useState(false);
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const [confirmDisputedDelivery, setConfirmDisputedDelivery] = useState(false);
+  const [confirmDelivery, setConfirmDelivery] = useState(false);
   const supabase = createClient();
   const { toast } = useToast();
 
@@ -395,22 +396,54 @@ export default function LoadDetailPage() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2 mt-3">
-              <Button
-                onClick={handleConfirmDelivery}
-                loading={actionLoading === "confirm"}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-              >
-                <CheckCircle className="h-4 w-4 mr-1" /> Confirm Delivery
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowDisputeForm(true)}
-                className="flex-1 border-red-300 dark:border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
-              >
-                <AlertTriangle className="h-4 w-4 mr-1" /> Report Issue
-              </Button>
-            </div>
+            {!confirmDelivery ? (
+              <div className="flex gap-2 mt-3">
+                <Button
+                  onClick={() => setConfirmDelivery(true)}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                >
+                  <CheckCircle className="h-4 w-4 mr-1" /> Confirm Delivery
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDisputeForm(true)}
+                  className="flex-1 border-red-300 dark:border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                >
+                  <AlertTriangle className="h-4 w-4 mr-1" /> Report Issue
+                </Button>
+              </div>
+            ) : (
+              <div className="mt-3 rounded-lg bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 p-3">
+                <div className="flex items-start gap-2 mb-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                      Are you sure?
+                    </p>
+                    <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-0.5">
+                      This confirms the delivery was completed successfully. Payment will be released to the carrier. This cannot be undone.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleConfirmDelivery}
+                    loading={actionLoading === "confirm"}
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    <CheckCircle className="h-3.5 w-3.5 mr-1" /> Yes, confirm delivery
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setConfirmDelivery(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </Card>
         )}
 

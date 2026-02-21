@@ -8,7 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatNaira, timeAgo, formatDateShort } from "@/lib/utils/format";
 import { LOAD_STATUS_LABELS } from "@/lib/constants";
-import { Package, MapPin, ArrowRight, Copy, Calendar } from "lucide-react";
+import { Package, MapPin, ArrowRight, Copy, Calendar, UserCircle } from "lucide-react";
+import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import Link from "next/link";
 
 const STATUS_FILTERS = ["all", "posted", "bidding", "accepted", "in_transit", "delivered", "completed", "disputed", "cancelled"];
@@ -17,6 +18,7 @@ export default function ShipperLoadsPage() {
   const [loads, setLoads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -26,14 +28,39 @@ export default function ShipperLoadsPage() {
 
       let query = supabase
         .from("loads")
-        .select("*")
+        .select("*, trips(id, carrier_id, trip_number, status)")
         .eq("shipper_id", user.id)
         .order("created_at", { ascending: false });
 
       if (filter !== "all") query = query.eq("status", filter as any);
 
       const { data } = await query;
-      setLoads(data || []);
+      const loadsList = data || [];
+
+      // Batch-fetch carrier profiles for loads that have trips
+      const carrierIds = [...new Set(
+        loadsList.flatMap((l: any) => {
+          const t = Array.isArray(l.trips) ? l.trips : l.trips ? [l.trips] : [];
+          return t.map((tr: any) => tr.carrier_id).filter(Boolean);
+        })
+      )];
+
+      let carrierMap: Record<string, any> = {};
+      if (carrierIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, full_name, company_name")
+          .in("id", carrierIds);
+        for (const p of profiles || []) carrierMap[p.id] = p;
+      }
+
+      // Attach carrier profile to each load's trip
+      const enriched = loadsList.map((l: any) => {
+        const t = Array.isArray(l.trips) ? l.trips[0] : l.trips;
+        return { ...l, _carrier: t ? carrierMap[t.carrier_id] || null : null, _trip: t || null };
+      });
+
+      setLoads(enriched);
       setLoading(false);
     }
     fetchLoads();
@@ -83,6 +110,8 @@ export default function ShipperLoadsPage() {
           <div className="space-y-3">
             {loads.map((load, i) => {
               const statusInfo = LOAD_STATUS_LABELS[load.status] || { label: load.status, color: "bg-gray-100 text-gray-800" };
+              const carrier = load._carrier;
+              const trip = load._trip;
               return (
                 <motion.div
                   key={load.id}
@@ -103,6 +132,18 @@ export default function ShipperLoadsPage() {
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {load.load_number}{load.cargo_description ? ` — ${load.cargo_description}` : ""} · {load.cargo_type} · {load.bid_count} bid{load.bid_count !== 1 ? "s" : ""}{load.pickup_date ? ` · Pickup: ${formatDateShort(load.pickup_date)}` : ""} · {timeAgo(load.created_at)}
                           </p>
+                          {carrier && (
+                            <div className="flex items-center gap-1.5 mt-1 text-xs">
+                              <button
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewUserId(trip.carrier_id); }}
+                                className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                              >
+                                <UserCircle className="h-3 w-3" />
+                                {carrier.company_name || carrier.full_name}
+                              </button>
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-start gap-2">
                           <Link
@@ -146,6 +187,8 @@ export default function ShipperLoadsPage() {
           </div>
         )}
       </div>
+
+      <ProfilePreview userId={previewUserId} onClose={() => setPreviewUserId(null)} />
     </div>
   );
 }

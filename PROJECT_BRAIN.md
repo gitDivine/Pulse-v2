@@ -226,3 +226,19 @@ PULSE is Africa's Logistics Nervous System — a two-sided freight marketplace c
 - **Last active time**: offline carriers show "Last active Xh ago" on directory cards
 - Created migration 014_carrier_discoverable.sql
 - **What's pending**: Run 014_carrier_discoverable.sql in Supabase
+
+### Session 14 — 2026-02-21 (continued)
+- **Automatic availability tracking**: carriers are now auto-set to "available" when they open the dashboard (only if status was "offline"). Explicit statuses (busy, hidden) are respected
+- **Activity heartbeat**: GET /api/carrier/availability now touches `last_active_at` on every fetch, keeping "Last active" timestamps accurate in the carrier directory
+- Modified: availability-toggle.tsx (auto-promote on mount), availability/route.ts (touch last_active_at on GET)
+- Build passes, committed and pushed
+- **What's done**: Full automatic availability detection — carriers show as available when using the app, offline when they're not
+- **What's pending**: Test the auto-availability flow end-to-end (login as carrier → verify toggle shows "Available" automatically)
+
+### Session 15 — 2026-02-21 (continued)
+- **Carrier icon on shipper load cards**: shippers now see the accepted carrier's name/icon on their My Loads list, matching how carriers see shipper icons on their bids page
+- Modified loads query to join `trips → profiles` (carrier) via `trips_carrier_id_fkey`
+- Added clickable `UserCircle` + carrier name below load metadata (only shows when a trip exists)
+- Added `ProfilePreview` component for tap-to-preview carrier profile
+- Modified: `src/app/(dashboard)/shipper/loads/page.tsx`
+- Build passes: 0 errors

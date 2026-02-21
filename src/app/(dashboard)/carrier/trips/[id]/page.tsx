@@ -7,10 +7,10 @@ import { Topbar } from "@/components/dashboard/topbar";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatNaira, timeAgo } from "@/lib/utils/format";
+import { formatNaira, timeAgo, formatDateShort } from "@/lib/utils/format";
 import { TRIP_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISPUTE_STATUS_LABELS } from "@/lib/constants";
 import { useToast } from "@/components/ui/toast";
-import { MapPin, Truck, CheckCircle, ArrowRight, Clock, ShieldAlert, MessageSquare, Send, UserCircle, Star, Phone, AlertTriangle, X } from "lucide-react";
+import { MapPin, Truck, CheckCircle, ArrowRight, Clock, ShieldAlert, MessageSquare, Send, UserCircle, Star, Phone, AlertTriangle, X, Calendar } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import { TripChat } from "@/components/dashboard/trip-chat";
@@ -231,6 +231,15 @@ export default function TripDetailPage() {
             <div className="mt-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
               <span>{cargoLabel}</span>
               {load.weight_kg && <span>{load.weight_kg}kg</span>}
+              {load.pickup_date && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  Pickup: {formatDateShort(load.pickup_date)}
+                </span>
+              )}
+              {load.delivery_date && (
+                <span>Deliver by: {formatDateShort(load.delivery_date)}</span>
+              )}
             </div>
             {load.cargo_description && (
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{load.cargo_description}</p>

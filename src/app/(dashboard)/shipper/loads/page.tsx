@@ -6,9 +6,9 @@ import { createClient } from "@/lib/supabase/client";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatNaira, timeAgo } from "@/lib/utils/format";
+import { formatNaira, timeAgo, formatDateShort } from "@/lib/utils/format";
 import { LOAD_STATUS_LABELS } from "@/lib/constants";
-import { Package, MapPin, ArrowRight, Copy } from "lucide-react";
+import { Package, MapPin, ArrowRight, Copy, Calendar } from "lucide-react";
 import Link from "next/link";
 
 const STATUS_FILTERS = ["all", "posted", "bidding", "accepted", "in_transit", "delivered", "completed", "disputed", "cancelled"];
@@ -101,7 +101,7 @@ export default function ShipperLoadsPage() {
                             {load.destination_city}, {load.destination_state}
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {load.load_number}{load.cargo_description ? ` — ${load.cargo_description}` : ""} · {load.cargo_type} · {load.bid_count} bid{load.bid_count !== 1 ? "s" : ""} · {timeAgo(load.created_at)}
+                            {load.load_number}{load.cargo_description ? ` — ${load.cargo_description}` : ""} · {load.cargo_type} · {load.bid_count} bid{load.bid_count !== 1 ? "s" : ""}{load.pickup_date ? ` · Pickup: ${formatDateShort(load.pickup_date)}` : ""} · {timeAgo(load.created_at)}
                           </p>
                         </div>
                         <div className="flex items-start gap-2">

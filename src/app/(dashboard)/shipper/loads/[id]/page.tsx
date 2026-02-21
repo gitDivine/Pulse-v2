@@ -8,10 +8,10 @@ import { Topbar } from "@/components/dashboard/topbar";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatNaira, timeAgo, formatWeight, formatDuration } from "@/lib/utils/format";
+import { formatNaira, timeAgo, formatWeight, formatDuration, formatDateShort, getPickupUrgency } from "@/lib/utils/format";
 import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, TRIP_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISPUTE_STATUS_LABELS, AVAILABILITY_STATUS_LABELS } from "@/lib/constants";
 import { Select } from "@/components/ui/select";
-import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCircle, Users, AlertTriangle, Upload, X, MessageSquare, ShieldCheck, ShieldAlert, UserCircle } from "lucide-react";
+import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCircle, Users, AlertTriangle, Upload, X, MessageSquare, ShieldCheck, ShieldAlert, UserCircle, Calendar } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import Link from "next/link";
@@ -368,6 +368,25 @@ export default function LoadDetailPage() {
                 <p className="font-medium text-gray-900 dark:text-white">
                   {formatNaira(load.budget_amount)} {load.is_negotiable && "(negotiable)"}
                 </p>
+              </div>
+            )}
+            {load.pickup_date && (
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Pickup Date</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-gray-900 dark:text-white">{formatDateShort(load.pickup_date)}</p>
+                  {getPickupUrgency(load.pickup_date) && (
+                    <Badge className={`${getPickupUrgency(load.pickup_date)!.color} text-[10px] px-1.5 py-0`}>
+                      {getPickupUrgency(load.pickup_date)!.label}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+            {load.delivery_date && (
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Delivery Date</p>
+                <p className="font-medium text-gray-900 dark:text-white">{formatDateShort(load.delivery_date)}</p>
               </div>
             )}
           </div>

@@ -6,9 +6,9 @@ import { Topbar } from "@/components/dashboard/topbar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
-import { formatNaira, timeAgo, formatWeight } from "@/lib/utils/format";
+import { formatNaira, timeAgo, formatWeight, getPickupUrgency, formatDateShort } from "@/lib/utils/format";
 import { NIGERIAN_STATES, CARGO_TYPES, LOAD_STATUS_LABELS } from "@/lib/constants";
-import { MapPin, ArrowRight, Package, Star, Calendar, Mail, Check, Undo2, UserCircle } from "lucide-react";
+import { MapPin, ArrowRight, Package, Star, Calendar, Mail, Check, Undo2, UserCircle, ArrowUpDown } from "lucide-react";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import Link from "next/link";
 
@@ -22,6 +22,7 @@ export default function LoadBoardPage() {
   const [originState, setOriginState] = useState("");
   const [destState, setDestState] = useState("");
   const [cargoType, setCargoType] = useState("");
+  const [sort, setSort] = useState("newest");
   const [myBids, setMyBids] = useState<Record<string, string>>({}); // load_id → bid status
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
 
@@ -33,6 +34,7 @@ export default function LoadBoardPage() {
       if (originState) params.set("origin_state", originState);
       if (destState) params.set("destination_state", destState);
       if (cargoType) params.set("cargo_type", cargoType);
+      if (sort !== "newest") params.set("sort", sort);
       params.set("limit", "50");
 
       const res = await fetch(`/api/loads?${params}`);
@@ -41,7 +43,7 @@ export default function LoadBoardPage() {
       setLoading(false);
     }
     fetchLoads();
-  }, [originState, destState, cargoType]);
+  }, [originState, destState, cargoType, sort]);
 
   // Fetch carrier's bids to show badges on load cards
   useEffect(() => {
@@ -115,7 +117,7 @@ export default function LoadBoardPage() {
         {tab === "loads" ? (
           <>
             {/* Filters */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Select
                 label="Origin State"
                 placeholder="Any state"
@@ -136,6 +138,15 @@ export default function LoadBoardPage() {
                 value={cargoType}
                 onChange={(e) => setCargoType(e.target.value)}
                 options={[{ value: "", label: "Any type" }, ...CARGO_TYPES.map((c) => ({ value: c.value, label: c.label }))]}
+              />
+              <Select
+                label="Sort by"
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                options={[
+                  { value: "newest", label: "Newest first" },
+                  { value: "soonest_pickup", label: "Soonest pickup" },
+                ]}
               />
             </div>
 
@@ -158,6 +169,7 @@ export default function LoadBoardPage() {
                   const shipper = load.profiles;
                   const cargoLabel = CARGO_TYPES.find((c) => c.value === load.cargo_type)?.label || load.cargo_type;
                   const bidStatus = myBids[load.id];
+                  const urgency = load.pickup_date ? getPickupUrgency(load.pickup_date) : null;
                   return (
                     <motion.div
                       key={load.id}
@@ -193,8 +205,11 @@ export default function LoadBoardPage() {
                                 {load.weight_kg && <span>· {formatWeight(load.weight_kg)}</span>}
                                 <span className="flex items-center gap-1">
                                   <Calendar className="h-3 w-3" />
-                                  Pickup: {new Date(load.pickup_date).toLocaleDateString("en-NG", { day: "numeric", month: "short" })}
+                                  Pickup: {formatDateShort(load.pickup_date)}
                                 </span>
+                                {urgency && (
+                                  <Badge className={`${urgency.color} text-[10px] px-1.5 py-0`}>{urgency.label}</Badge>
+                                )}
                               </div>
                               <div className="flex items-center gap-2 mt-1.5 text-xs">
                                 <button
@@ -285,6 +300,12 @@ export default function LoadBoardPage() {
                                 {cargoLabel}
                               </span>
                               {load?.weight_kg && <span>· {formatWeight(load.weight_kg)}</span>}
+                              {load?.pickup_date && (
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  Pickup: {formatDateShort(load.pickup_date)}
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-2 mt-1.5 text-xs">
                               <button

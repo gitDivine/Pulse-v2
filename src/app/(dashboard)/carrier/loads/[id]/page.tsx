@@ -9,9 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { formatNaira, timeAgo, formatWeight } from "@/lib/utils/format";
+import { formatNaira, timeAgo, formatWeight, formatDateShort, getPickupUrgency } from "@/lib/utils/format";
 import { LOAD_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, Package, Star, Send, XCircle, ArrowRight, UserCircle } from "lucide-react";
+import { MapPin, Package, Star, Send, XCircle, ArrowRight, UserCircle, Calendar } from "lucide-react";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import { useToast } from "@/components/ui/toast";
 
@@ -223,6 +223,25 @@ export default function CarrierLoadDetailPage() {
                   <span className="font-bold text-orange-600">
                     {formatNaira(load.budget_amount)} {load.is_negotiable && "(negotiable)"}
                   </span>
+                </div>
+              )}
+              {load.pickup_date && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 dark:text-gray-400">Pickup</span>
+                  <span className="flex items-center gap-1.5 font-medium text-gray-900 dark:text-white">
+                    {formatDateShort(load.pickup_date)}
+                    {getPickupUrgency(load.pickup_date) && (
+                      <Badge className={`${getPickupUrgency(load.pickup_date)!.color} text-[10px] px-1.5 py-0`}>
+                        {getPickupUrgency(load.pickup_date)!.label}
+                      </Badge>
+                    )}
+                  </span>
+                </div>
+              )}
+              {load.delivery_date && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Delivery</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{formatDateShort(load.delivery_date)}</span>
                 </div>
               )}
             </div>

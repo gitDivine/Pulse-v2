@@ -5,9 +5,9 @@ import { motion } from "framer-motion";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatNaira, timeAgo } from "@/lib/utils/format";
+import { formatNaira, timeAgo, formatDateShort } from "@/lib/utils/format";
 import { BID_STATUS_LABELS, TRIP_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
-import { MapPin, ArrowRight, Package, Gavel, UserCircle, Truck } from "lucide-react";
+import { MapPin, ArrowRight, Package, Gavel, UserCircle, Truck, Calendar } from "lucide-react";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 import Link from "next/link";
 
@@ -123,6 +123,12 @@ export default function CarrierBidsPage() {
                               <Package className="h-3 w-3" />
                               {cargoLabel}
                             </span>
+                            {load?.pickup_date && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                Pickup: {formatDateShort(load.pickup_date)}
+                              </span>
+                            )}
                             {hasTrip && (
                               <span className="flex items-center gap-1 text-orange-500">
                                 <Truck className="h-3 w-3" />

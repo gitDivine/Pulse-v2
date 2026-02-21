@@ -67,6 +67,26 @@ export function formatDistance(km: number): string {
   return `${km.toFixed(0)}km`;
 }
 
+/** Get pickup urgency label + color from a date string */
+export function getPickupUrgency(dateStr: string): { label: string; color: string } | null {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const pickup = new Date(dateStr + "T00:00:00");
+  const diffMs = pickup.getTime() - now.getTime();
+  const diffDays = Math.round(diffMs / 86400000);
+
+  if (diffDays < 0) return { label: "Overdue", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" };
+  if (diffDays === 0) return { label: "Today", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" };
+  if (diffDays === 1) return { label: "Tomorrow", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" };
+  if (diffDays <= 3) return { label: `In ${diffDays} days`, color: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" };
+  return null;
+}
+
+/** Format a date string to short display (e.g., "15 Feb") */
+export function formatDateShort(dateStr: string): string {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-NG", { day: "numeric", month: "short" });
+}
+
 /** Format duration in hours to human-readable */
 export function formatDuration(hours: number): string {
   if (hours < 1) return `${Math.round(hours * 60)}min`;

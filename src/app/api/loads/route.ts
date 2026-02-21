@@ -36,8 +36,14 @@ export async function GET(request: NextRequest) {
     if (cargoType) query = query.eq("cargo_type", cargoType as any);
     if (shipperId) query = query.eq("shipper_id", shipperId as any);
 
+    const sort = searchParams.get("sort");
+    if (sort === "soonest_pickup") {
+      query = query.order("pickup_date", { ascending: true });
+    } else {
+      query = query.order("created_at", { ascending: false });
+    }
+
     const { data, count, error } = await query
-      .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) throw error;

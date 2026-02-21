@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     const vehicleType = searchParams.get("vehicle_type");
     const minRating = searchParams.get("min_rating");
     const search = searchParams.get("search");
+    const availability = searchParams.get("availability");
     const favoritesOnly = searchParams.get("favorites_only") === "true";
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = parseInt(searchParams.get("offset") || "0");
@@ -50,9 +51,10 @@ export async function GET(request: NextRequest) {
 
     let query = serviceSupabase
       .from("profiles")
-      .select("id, full_name, company_name, state, city, fleet_size, avg_rating, total_reviews, verification_level, avatar_url, created_at", { count: "exact" })
+      .select("id, full_name, company_name, state, city, fleet_size, avg_rating, total_reviews, verification_level, avatar_url, availability_status, created_at", { count: "exact" })
       .eq("role", "carrier" as any);
 
+    if (availability) query = query.eq("availability_status", availability as any);
     if (state) query = query.eq("state", state);
     if (minRating) query = query.gte("avg_rating", parseFloat(minRating));
     if (search) query = query.or(`full_name.ilike.%${search}%,company_name.ilike.%${search}%`);

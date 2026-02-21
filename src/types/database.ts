@@ -18,6 +18,7 @@ export type VerificationLevel = "phone" | "bvn_nin" | "cac";
 export type InvitationStatus = "pending" | "viewed" | "bid_placed" | "expired";
 export type DisputeType = "damaged_goods" | "missing_items" | "wrong_items" | "late_delivery" | "not_received" | "overcharge" | "other";
 export type DisputeStatus = "open" | "carrier_responded" | "resolved" | "escalated";
+export type AvailabilityStatus = "available" | "busy" | "offline";
 
 export interface Database {
   public: {
@@ -38,6 +39,8 @@ export interface Database {
           business_type: string | null;
           avg_rating: number;
           total_reviews: number;
+          availability_status: AvailabilityStatus;
+          last_active_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -54,6 +57,7 @@ export interface Database {
           city?: string | null;
           fleet_size?: number;
           business_type?: string | null;
+          availability_status?: AvailabilityStatus;
         };
         Update: {
           role?: UserRole;
@@ -67,6 +71,8 @@ export interface Database {
           city?: string | null;
           fleet_size?: number;
           business_type?: string | null;
+          availability_status?: AvailabilityStatus;
+          last_active_at?: string | null;
         };
         Relationships: [];
       };
@@ -473,6 +479,7 @@ export interface Database {
       invitation_status: InvitationStatus;
       dispute_type: DisputeType;
       dispute_status: DisputeStatus;
+      availability_status: AvailabilityStatus;
     };
     CompositeTypes: Record<string, never>;
   };

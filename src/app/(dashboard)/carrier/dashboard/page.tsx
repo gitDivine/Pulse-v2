@@ -12,6 +12,7 @@ import {
   UserCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { AvailabilityToggle } from "@/components/dashboard/availability-toggle";
 
 export default async function CarrierDashboardPage() {
   const supabase = await createServerSupabase();
@@ -43,7 +44,7 @@ export default async function CarrierDashboardPage() {
       .limit(5),
     supabase
       .from("profiles")
-      .select("avg_rating, total_reviews")
+      .select("avg_rating, total_reviews, availability_status")
       .eq("id", user!.id)
       .single(),
   ]);
@@ -86,6 +87,12 @@ export default async function CarrierDashboardPage() {
       <Topbar title="Overview" />
 
       <div className="p-6 space-y-6">
+        {/* Availability toggle */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Your status</p>
+          <AvailabilityToggle initialStatus={profile?.availability_status || "offline"} />
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => {

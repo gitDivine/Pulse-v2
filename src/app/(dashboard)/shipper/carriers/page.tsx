@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
-import { NIGERIAN_STATES, VEHICLE_TYPES, RATING_OPTIONS, VERIFICATION_LABELS } from "@/lib/constants";
+import { NIGERIAN_STATES, VEHICLE_TYPES, RATING_OPTIONS, VERIFICATION_LABELS, AVAILABILITY_STATUS_LABELS } from "@/lib/constants";
 import {
   Star, Heart, MapPin, Truck, Shield, Search,
   ChevronLeft, ChevronRight, Send, X, Users, Check,
@@ -42,6 +42,7 @@ export default function CarrierDirectoryPage() {
   const [vehicleTypeFilter, setVehicleTypeFilter] = useState("");
   const [ratingFilter, setRatingFilter] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [availabilityFilter, setAvailabilityFilter] = useState("");
 
   // Invite modal
   const [inviteCarrier, setInviteCarrier] = useState<any | null>(null);
@@ -59,7 +60,7 @@ export default function CarrierDirectoryPage() {
   }, [search]);
 
   // Reset page on filter change
-  useEffect(() => { setPage(0); }, [stateFilter, vehicleTypeFilter, ratingFilter, debouncedSearch, favoritesOnly]);
+  useEffect(() => { setPage(0); }, [stateFilter, vehicleTypeFilter, ratingFilter, debouncedSearch, favoritesOnly, availabilityFilter]);
 
   // Fetch carriers
   useEffect(() => {
@@ -71,6 +72,7 @@ export default function CarrierDirectoryPage() {
       if (ratingFilter) params.set("min_rating", ratingFilter);
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (favoritesOnly) params.set("favorites_only", "true");
+      if (availabilityFilter) params.set("availability", availabilityFilter);
       params.set("limit", String(PAGE_SIZE));
       params.set("offset", String(page * PAGE_SIZE));
 
@@ -86,7 +88,7 @@ export default function CarrierDirectoryPage() {
       }
     }
     fetchCarriers();
-  }, [stateFilter, vehicleTypeFilter, ratingFilter, debouncedSearch, favoritesOnly, page]);
+  }, [stateFilter, vehicleTypeFilter, ratingFilter, debouncedSearch, favoritesOnly, availabilityFilter, page]);
 
   // Fetch favorites on mount
   useEffect(() => {
@@ -234,8 +236,37 @@ export default function CarrierDirectoryPage() {
           />
         </div>
 
-        {/* Favorites toggle */}
-        <div className="flex items-center gap-2">
+        {/* Availability filter + Favorites toggle */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setAvailabilityFilter("")}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              !availabilityFilter
+                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm border border-gray-200 dark:border-gray-600"
+                : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-transparent hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+          >
+            All
+          </button>
+          {(["available", "busy", "offline"] as const).map((s) => {
+            const info = AVAILABILITY_STATUS_LABELS[s];
+            const active = availabilityFilter === s;
+            return (
+              <button
+                key={s}
+                onClick={() => setAvailabilityFilter(active ? "" : s)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm border border-gray-200 dark:border-gray-600"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-transparent hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                <span className={`h-2 w-2 rounded-full ${info.dotColor}`} />
+                {info.label}
+              </button>
+            );
+          })}
+          <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
           <button
             onClick={() => setFavoritesOnly(!favoritesOnly)}
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
@@ -248,7 +279,7 @@ export default function CarrierDirectoryPage() {
             Favorites only
           </button>
           {!loading && (
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-400 ml-auto">
               {total} carrier{total !== 1 ? "s" : ""} found
             </span>
           )}
@@ -309,10 +340,18 @@ export default function CarrierDirectoryPage() {
                         onClick={() => setPreviewUserId(carrier.id)}
                         className="flex items-start gap-3 pr-8 text-left group"
                       >
-                        <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-500/10 flex items-center justify-center shrink-0">
-                          <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
-                            {(carrier.full_name || "?")[0].toUpperCase()}
-                          </span>
+                        <div className="relative h-10 w-10 shrink-0">
+                          <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-500/10 flex items-center justify-center">
+                            <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                              {(carrier.full_name || "?")[0].toUpperCase()}
+                            </span>
+                          </div>
+                          <span
+                            className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-[#111] ${
+                              AVAILABILITY_STATUS_LABELS[carrier.availability_status as string]?.dotColor || "bg-gray-400"
+                            }`}
+                            title={AVAILABILITY_STATUS_LABELS[carrier.availability_status as string]?.label || "Offline"}
+                          />
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">

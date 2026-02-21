@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { createClient } from "@/lib/supabase/client";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatNaira, timeAgo } from "@/lib/utils/format";
-import { TRIP_STATUS_LABELS } from "@/lib/constants";
-import { MapPin, ArrowRight, Truck } from "lucide-react";
+import { TRIP_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
+import { MapPin, ArrowRight, Truck, UserCircle } from "lucide-react";
 import Link from "next/link";
 
 const STATUS_FILTERS = ["all", "pending", "pickup", "in_transit", "delivered", "confirmed"];
@@ -17,30 +16,18 @@ export default function CarrierTripsPage() {
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
-  const supabase = createClient();
 
   useEffect(() => {
     async function fetchTrips() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      let query = supabase
-        .from("trips")
-        .select(`
-          *,
-          loads(origin_city, origin_state, destination_city, destination_state, cargo_type)
-        `)
-        .eq("carrier_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (filter !== "all") query = query.eq("status", filter as any);
-
-      const { data } = await query;
-      setTrips(data || []);
+      const url = filter === "all" ? "/api/carrier/trips" : `/api/carrier/trips?status=${filter}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      setTrips(data.trips || []);
       setLoading(false);
     }
+    setLoading(true);
     fetchTrips();
-  }, [filter, supabase]);
+  }, [filter]);
 
   return (
     <div>
@@ -67,7 +54,7 @@ export default function CarrierTripsPage() {
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+              <div key={i} className="h-28 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
             ))}
           </div>
         ) : trips.length === 0 ? (
@@ -80,6 +67,8 @@ export default function CarrierTripsPage() {
             {trips.map((trip, i) => {
               const statusInfo = TRIP_STATUS_LABELS[trip.status] || { label: trip.status, color: "bg-gray-100 text-gray-800" };
               const load = trip.loads as any;
+              const cargoLabel = load ? (CARGO_TYPES.find((c) => c.value === load.cargo_type)?.label || load.cargo_type) : "";
+              const shipperName = load?.profiles?.company_name || load?.profiles?.full_name;
               return (
                 <motion.div
                   key={trip.id}
@@ -90,18 +79,33 @@ export default function CarrierTripsPage() {
                   <Link href={`/carrier/trips/${trip.id}`}>
                     <Card className="hover:shadow-md transition-shadow cursor-pointer">
                       <div className="flex items-start justify-between">
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
                             <MapPin className="h-3.5 w-3.5 text-orange-500 shrink-0" />
-                            {load?.origin_city}, {load?.origin_state}
-                            <ArrowRight className="h-3 w-3 text-gray-400" />
-                            {load?.destination_city}, {load?.destination_state}
+                            <span className="truncate">
+                              {load?.origin_city}, {load?.origin_state}
+                            </span>
+                            <ArrowRight className="h-3 w-3 text-gray-400 shrink-0" />
+                            <span className="truncate">
+                              {load?.destination_city}, {load?.destination_state}
+                            </span>
                           </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {trip.trip_number} · {timeAgo(trip.created_at)}
-                          </p>
+                          {load?.description && (
+                            <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 ml-5.5 line-clamp-1">
+                              {load.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1 ml-5.5">
+                            <span>{trip.trip_number} · {cargoLabel} · {timeAgo(trip.created_at)}</span>
+                          </div>
+                          {shipperName && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1 ml-5.5">
+                              <UserCircle className="h-3 w-3" />
+                              <span>{shipperName}</span>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex flex-col items-end gap-1">
+                        <div className="flex flex-col items-end gap-1 shrink-0 ml-3">
                           <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
                           <span className="text-sm font-semibold text-gray-900 dark:text-white">
                             {formatNaira(trip.agreed_amount)}

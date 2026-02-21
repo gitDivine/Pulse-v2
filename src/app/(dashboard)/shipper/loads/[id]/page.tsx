@@ -31,6 +31,7 @@ export default function LoadDetailPage() {
   const [evidenceUrls, setEvidenceUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
+  const [confirmDisputedDelivery, setConfirmDisputedDelivery] = useState(false);
   const supabase = createClient();
   const { toast } = useToast();
 
@@ -564,6 +565,52 @@ export default function LoadDetailPage() {
                 >
                   <ShieldAlert className="h-4 w-4 mr-1" /> Escalate
                 </Button>
+              </div>
+            )}
+
+            {/* Confirm delivery despite dispute (e.g., filed by mistake) */}
+            {dispute.status !== "resolved" && dispute.status !== "escalated" && (load.status === "disputed" || load.status === "delivered") && (
+              <div className="mt-3 pt-3 border-t border-red-200 dark:border-red-500/20">
+                {!confirmDisputedDelivery ? (
+                  <button
+                    onClick={() => setConfirmDisputedDelivery(true)}
+                    className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                  >
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    Actually, confirm delivery instead
+                  </button>
+                ) : (
+                  <div className="rounded-lg bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 p-3">
+                    <div className="flex items-start gap-2 mb-2">
+                      <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                          Are you sure?
+                        </p>
+                        <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-0.5">
+                          This will resolve the open dispute and confirm delivery. Payment will be released to the carrier. This action cannot be undone.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleConfirmDelivery}
+                        loading={actionLoading === "confirm"}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        <CheckCircle className="h-3.5 w-3.5 mr-1" /> Yes, confirm delivery
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setConfirmDisputedDelivery(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

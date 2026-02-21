@@ -25,6 +25,7 @@ export default function TripDetailPage() {
   const [dispute, setDispute] = useState<any>(null);
   const [responseText, setResponseText] = useState("");
   const [respondLoading, setRespondLoading] = useState(false);
+  const [confirmResponse, setConfirmResponse] = useState(false);
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const { toast } = useToast();
@@ -84,11 +85,16 @@ export default function TripDetailPage() {
     }
   }
 
-  async function handleRespondToDispute() {
+  function requestRespondToDispute() {
     if (!dispute || !responseText.trim()) {
       toast("Please write a response", "warning");
       return;
     }
+    setConfirmResponse(true);
+  }
+
+  async function handleRespondToDispute() {
+    setConfirmResponse(false);
     setRespondLoading(true);
     try {
       const res = await fetch(`/api/disputes/${dispute.id}`, {
@@ -309,11 +315,36 @@ export default function TripDetailPage() {
                     />
                     <Button
                       size="sm"
-                      onClick={handleRespondToDispute}
+                      onClick={requestRespondToDispute}
                       loading={respondLoading}
                     >
                       <Send className="h-3.5 w-3.5 mr-1" /> Send Response
                     </Button>
+
+                    {/* Confirm before sending */}
+                    {confirmResponse && (
+                      <div className="mt-2 rounded-lg bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 p-3">
+                        <div className="flex items-start gap-2 mb-2">
+                          <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                              Send this response?
+                            </p>
+                            <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-0.5">
+                              The shipper will see your response and use it to decide the dispute. Make sure it&apos;s complete and accurate.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={handleRespondToDispute}>
+                            <Send className="h-3.5 w-3.5 mr-1" /> Yes, send it
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setConfirmResponse(false)}>
+                            Edit response
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

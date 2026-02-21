@@ -32,6 +32,13 @@ export async function GET(
 
     const trip = data as any;
 
+    // Ownership check: only the carrier or shipper can view this trip
+    const isCarrier = trip.carrier_id === user.id;
+    const isShipper = trip.loads?.shipper_id === user.id;
+    if (!isCarrier && !isShipper) {
+      return NextResponse.json({ error: "Not authorized to view this trip" }, { status: 403 });
+    }
+
     // Fallback: if shipper profile wasn't resolved through the join, fetch separately
     if (trip.loads && !trip.loads.profiles && trip.loads.shipper_id) {
       const { data: shipperProfile } = await serviceSupabase

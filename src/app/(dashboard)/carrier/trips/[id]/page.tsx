@@ -49,7 +49,16 @@ export default function TripDetailPage() {
     fetchData();
   }, [id]);
 
+  const statusConfirmMessages: Record<string, string> = {
+    pickup: "Confirm you're at the pickup location?",
+    in_transit: "Confirm cargo is loaded and you're starting transit?",
+    delivered: "Confirm this load has been delivered? This cannot be undone.",
+  };
+
   async function updateStatus(newStatus: string) {
+    const message = statusConfirmMessages[newStatus];
+    if (message && !window.confirm(message)) return;
+
     setActionLoading(true);
     try {
       const res = await fetch(`/api/trips/${id}`, {

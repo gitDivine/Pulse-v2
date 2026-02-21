@@ -1,26 +1,47 @@
 import Link from "next/link";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createServerSupabase, createServiceRoleSupabase } from "@/lib/supabase/server";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatNaira, timeAgo } from "@/lib/utils/format";
 import { TRIP_STATUS_LABELS } from "@/lib/constants";
-import { Banknote, TrendingUp, Clock, CheckCircle, ChevronRight } from "lucide-react";
+import { Banknote, TrendingUp, Clock, CheckCircle, ChevronRight, UserCircle } from "lucide-react";
 
 export default async function EarningsPage() {
   const supabase = await createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
+  const serviceSupabase = await createServiceRoleSupabase();
 
-  const { data: trips } = await supabase
+  const { data: trips } = await serviceSupabase
     .from("trips")
     .select(`
       id, trip_number, agreed_amount, status, paid_at, created_at,
-      loads(origin_city, origin_state, destination_city, destination_state)
+      loads(
+        origin_city, origin_state, destination_city, destination_state,
+        shipper_id,
+        profiles!loads_shipper_id_fkey(full_name, company_name)
+      )
     `)
     .eq("carrier_id", user!.id)
     .order("created_at", { ascending: false });
 
   const allTrips = (trips || []) as any[];
+
+  // Fallback: fetch shipper profiles where join didn't resolve
+  const missing = allTrips.filter((t) => t.loads && !t.loads.profiles && t.loads.shipper_id);
+  if (missing.length > 0) {
+    const ids = [...new Set(missing.map((t) => t.loads.shipper_id))] as string[];
+    const { data: profiles } = await serviceSupabase
+      .from("profiles")
+      .select("id, full_name, company_name")
+      .in("id", ids);
+    if (profiles) {
+      const map = Object.fromEntries(profiles.map((p) => [p.id, p]));
+      for (const t of missing) {
+        t.loads.profiles = map[t.loads.shipper_id] || null;
+      }
+    }
+  }
   const confirmedTrips = allTrips.filter((t) => t.status === "confirmed");
   const pendingTrips = allTrips.filter((t) => ["delivered"].includes(t.status));
   const activeTrips = allTrips.filter((t) => ["pending", "pickup", "in_transit"].includes(t.status));
@@ -72,19 +93,29 @@ export default async function EarningsPage() {
               {allTrips.map((trip) => {
                 const load = trip.loads as any;
                 const statusInfo = TRIP_STATUS_LABELS[trip.status] || { label: trip.status, color: "bg-gray-100 text-gray-800" };
+                const shipperName = load?.profiles?.company_name || load?.profiles?.full_name;
                 return (
                   <Link
                     key={trip.id}
                     href={`/carrier/trips/${trip.id}`}
                     className="flex items-center justify-between py-3 -mx-1 px-1 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
                   >
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                         {load?.origin_city} → {load?.destination_city}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {trip.trip_number} · {timeAgo(trip.created_at)}
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                        <span>{trip.trip_number} · {timeAgo(trip.created_at)}</span>
+                        {shipperName && (
+                          <>
+                            <span>·</span>
+                            <span className="flex items-center gap-0.5">
+                              <UserCircle className="h-3 w-3" />
+                              {shipperName}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge className={statusInfo.color}>{statusInfo.label}</Badge>

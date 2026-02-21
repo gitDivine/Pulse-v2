@@ -1,4 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createServerSupabase, createServiceRoleSupabase } from "@/lib/supabase/server";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,12 +9,15 @@ import {
   Truck,
   Banknote,
   Star,
+  UserCircle,
 } from "lucide-react";
 import Link from "next/link";
 
 export default async function CarrierDashboardPage() {
   const supabase = await createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
+
+  const serviceSupabase = await createServiceRoleSupabase();
 
   const [availableLoadsRes, tripsRes, recentTripsRes, profileRes] = await Promise.all([
     supabase
@@ -25,11 +28,15 @@ export default async function CarrierDashboardPage() {
       .from("trips")
       .select("id, agreed_amount, status")
       .eq("carrier_id", user!.id),
-    supabase
+    serviceSupabase
       .from("trips")
       .select(`
         id, trip_number, agreed_amount, status, created_at,
-        loads(origin_city, origin_state, destination_city, destination_state, cargo_type)
+        loads(
+          origin_city, origin_state, destination_city, destination_state,
+          cargo_type, cargo_description, shipper_id,
+          profiles!loads_shipper_id_fkey(full_name, company_name)
+        )
       `)
       .eq("carrier_id", user!.id)
       .order("created_at", { ascending: false })
@@ -43,7 +50,23 @@ export default async function CarrierDashboardPage() {
 
   const availableCount = availableLoadsRes.count || 0;
   const trips = tripsRes.data || [];
-  const recentTrips = recentTripsRes.data || [];
+  const recentTrips = (recentTripsRes.data || []) as any[];
+
+  // Fallback: fetch shipper profiles for trips where the join didn't resolve
+  const missing = recentTrips.filter((t) => t.loads && !t.loads.profiles && t.loads.shipper_id);
+  if (missing.length > 0) {
+    const ids = [...new Set(missing.map((t) => t.loads.shipper_id))] as string[];
+    const { data: profiles } = await serviceSupabase
+      .from("profiles")
+      .select("id, full_name, company_name")
+      .in("id", ids);
+    if (profiles) {
+      const map = Object.fromEntries(profiles.map((p) => [p.id, p]));
+      for (const t of missing) {
+        t.loads.profiles = map[t.loads.shipper_id] || null;
+      }
+    }
+  }
   const profile = profileRes.data;
 
   const activeTrips = trips.filter((t) => ["pending", "pickup", "in_transit"].includes(t.status)).length;
@@ -116,21 +139,36 @@ export default async function CarrierDashboardPage() {
               {recentTrips.map((trip: any) => {
                 const statusInfo = TRIP_STATUS_LABELS[trip.status] || { label: trip.status, color: "bg-gray-100 text-gray-800" };
                 const load = trip.loads as any;
+                const shipperName = load?.profiles?.company_name || load?.profiles?.full_name;
                 return (
                   <Link
                     key={trip.id}
                     href={`/carrier/trips/${trip.id}`}
                     className="flex items-center justify-between py-3 hover:bg-gray-50 dark:hover:bg-white/5 -mx-2 px-2 rounded-lg transition-colors"
                   >
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {load?.origin_city}, {load?.origin_state} → {load?.destination_city}, {load?.destination_state}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {trip.trip_number} · {timeAgo(trip.created_at)}
-                      </p>
+                      {load?.cargo_description && (
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 line-clamp-1">
+                          {load.cargo_description}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <span>{trip.trip_number} · {timeAgo(trip.created_at)}</span>
+                        {shipperName && (
+                          <>
+                            <span>·</span>
+                            <span className="flex items-center gap-0.5">
+                              <UserCircle className="h-3 w-3" />
+                              {shipperName}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0 ml-3">
                       <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
                         {formatNaira(trip.agreed_amount)}

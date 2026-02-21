@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { TourGate } from "@/components/dashboard/tour-gate";
 import { X, Menu } from "lucide-react";
 
 interface DashboardShellProps {
@@ -74,6 +75,8 @@ export function DashboardShell({ children, userName, companyName, role }: Dashbo
           {children}
         </motion.div>
       </main>
+
+      <TourGate role={role} />
     </div>
   );
 }

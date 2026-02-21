@@ -8,13 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { NIGERIAN_STATES } from "@/lib/constants";
-import { Save } from "lucide-react";
+import { Save, RotateCcw } from "lucide-react";
+import { GuidedTour } from "@/components/dashboard/guided-tour";
+import { resetTourForRole } from "@/components/dashboard/tour-gate";
 
 export default function ShipperSettingsPage() {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [showTour, setShowTour] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -129,7 +132,27 @@ export default function ShipperSettingsPage() {
             </Button>
           </form>
         </Card>
+
+        <Card className="mt-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="mb-1">Guided Tour</CardTitle>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Replay the platform walkthrough to learn about all features.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { resetTourForRole("shipper"); setShowTour(true); }}
+            >
+              <RotateCcw className="h-4 w-4 mr-1" /> Replay
+            </Button>
+          </div>
+        </Card>
       </div>
+
+      {showTour && <GuidedTour role="shipper" onComplete={() => setShowTour(false)} />}
     </div>
   );
 }

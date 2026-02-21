@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { NIGERIAN_STATES } from "@/lib/constants";
-import { Save, EyeOff, Eye } from "lucide-react";
+import { Save, EyeOff, Eye, RotateCcw } from "lucide-react";
+import { GuidedTour } from "@/components/dashboard/guided-tour";
+import { resetTourForRole } from "@/components/dashboard/tour-gate";
 
 export default function CarrierSettingsPage() {
   const supabase = createClient();
@@ -24,6 +26,7 @@ export default function CarrierSettingsPage() {
   const [email, setEmail] = useState("");
   const [isDiscoverable, setIsDiscoverable] = useState(true);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -177,7 +180,27 @@ export default function CarrierSettingsPage() {
             {isDiscoverable ? "Visible in directory" : "Hidden from directory"}
           </div>
         </Card>
+
+        <Card className="mt-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="mb-1">Guided Tour</CardTitle>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Replay the platform walkthrough to learn about all features.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { resetTourForRole("carrier"); setShowTour(true); }}
+            >
+              <RotateCcw className="h-4 w-4 mr-1" /> Replay
+            </Button>
+          </div>
+        </Card>
       </div>
+
+      {showTour && <GuidedTour role="carrier" onComplete={() => setShowTour(false)} />}
     </div>
   );
 }

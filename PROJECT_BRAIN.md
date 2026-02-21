@@ -254,3 +254,13 @@ PULSE is Africa's Logistics Nervous System — a two-sided freight marketplace c
 - Modified: database.ts, constants, bids/[bidId]/route.ts, payments/route.ts, payments/webhook/route.ts, shipper loads/[id]/page.tsx
 - Build passes: 0 errors
 - **What's pending**: Run `016_platform_fee.sql` in Supabase SQL Editor
+
+- **Guided onboarding tour**: role-specific walkthrough auto-appears on first dashboard visit, extensible via config
+- Created `src/lib/constants/tour-steps.ts`: shipper (6 steps) + carrier (7 steps) with icons, titles, descriptions, CTAs
+- Created `src/components/dashboard/guided-tour.tsx`: full-screen overlay with spring animations, direction-aware slides, progress dots, skip/back/next/CTA actions
+- Created `src/components/dashboard/tour-gate.tsx`: localStorage gate (`pulse_tour_completed_{role}`), 600ms delay before showing, exports `resetTourForRole()` for replay
+- Modified `dashboard-shell.tsx`: added `<TourGate role={role} />` after main content
+- Modified shipper + carrier settings pages: "Replay Tour" card with reset + inline GuidedTour
+- Extensibility: add one object to the role's array in `tour-steps.ts` — progress dots, navigation, step count auto-adjust
+- Build passes: 0 errors
+- **What's done**: Complete guided tour system — auto-shows for new users, replayable from settings, role-specific steps

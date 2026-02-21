@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star, Send, CheckCircle } from "lucide-react";
+import { Star, Send, CheckCircle, AlertCircle } from "lucide-react";
 
 interface TripReviewProps {
   tripId: string;
@@ -20,6 +20,7 @@ export function TripReview({ tripId, revieweeId, revieweeLabel }: TripReviewProp
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch(`/api/reviews?trip_id=${tripId}`)
@@ -38,6 +39,7 @@ export function TripReview({ tripId, revieweeId, revieweeLabel }: TripReviewProp
   async function handleSubmit() {
     if (rating === 0) return;
     setSubmitting(true);
+    setError("");
     try {
       const res = await fetch("/api/reviews", {
         method: "POST",
@@ -50,11 +52,11 @@ export function TripReview({ tripId, revieweeId, revieweeLabel }: TripReviewProp
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || "Failed to submit review");
       setExistingReview(data.review);
       setSubmitted(true);
-    } catch {
-      // Silently handle — likely duplicate
+    } catch (err: any) {
+      setError(err.message || "Failed to submit review");
     } finally {
       setSubmitting(false);
     }
@@ -152,6 +154,13 @@ export function TripReview({ tripId, revieweeId, revieweeLabel }: TripReviewProp
         rows={2}
         className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white bg-white dark:bg-white/5 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow resize-none"
       />
+
+      {error && (
+        <div className="flex items-center gap-1.5 mt-2 text-sm text-red-600 dark:text-red-400">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          {error}
+        </div>
+      )}
 
       <Button
         size="sm"

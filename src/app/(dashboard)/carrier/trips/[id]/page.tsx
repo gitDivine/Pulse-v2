@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { formatNaira, timeAgo } from "@/lib/utils/format";
 import { TRIP_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISPUTE_STATUS_LABELS } from "@/lib/constants";
 import { useToast } from "@/components/ui/toast";
-import { MapPin, Truck, CheckCircle, ArrowRight, Clock, ShieldAlert, MessageSquare, Send } from "lucide-react";
+import { MapPin, Truck, CheckCircle, ArrowRight, Clock, ShieldAlert, MessageSquare, Send, UserCircle, Star, Phone } from "lucide-react";
+import { ProfilePreview } from "@/components/dashboard/profile-preview";
 
 const TRIP_FLOW = ["pending", "pickup", "in_transit", "delivered", "confirmed"];
 
@@ -23,6 +24,7 @@ export default function TripDetailPage() {
   const [dispute, setDispute] = useState<any>(null);
   const [responseText, setResponseText] = useState("");
   const [respondLoading, setRespondLoading] = useState(false);
+  const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -209,6 +211,40 @@ export default function TripDetailPage() {
           </Card>
         )}
 
+        {/* Shipper Info */}
+        {load?.profiles && (
+          <Card>
+            <CardTitle className="mb-3">Shipper</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setPreviewUserId(load.shipper_id)}
+                  className="flex items-center gap-1.5 font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                >
+                  <UserCircle className="h-4 w-4 text-gray-400" />
+                  {load.profiles.company_name || load.profiles.full_name}
+                </button>
+                {load.profiles.avg_rating > 0 && (
+                  <div className="flex items-center gap-1 text-yellow-600">
+                    <Star className="h-3.5 w-3.5 fill-current" />
+                    <span className="text-sm">{load.profiles.avg_rating.toFixed(1)}</span>
+                  </div>
+                )}
+              </div>
+              {load.profiles.phone && (
+                <a
+                  href={`tel:${load.profiles.phone}`}
+                  className="flex items-center gap-1.5 text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors"
+                >
+                  <Phone className="h-4 w-4" />
+                  Call
+                </a>
+              )}
+            </div>
+          </Card>
+        )}
+
         {/* Dispute */}
         {dispute && (
           <Card className="border-red-200 dark:border-red-500/20 bg-red-50/50 dark:bg-red-500/5">
@@ -310,6 +346,8 @@ export default function TripDetailPage() {
           </Card>
         )}
       </div>
+
+      <ProfilePreview userId={previewUserId} onClose={() => setPreviewUserId(null)} />
     </div>
   );
 }

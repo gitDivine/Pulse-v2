@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { formatNaira, timeAgo } from "@/lib/utils/format";
 import { TRIP_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISPUTE_STATUS_LABELS } from "@/lib/constants";
 import { useToast } from "@/components/ui/toast";
-import { MapPin, Truck, CheckCircle, ArrowRight, Clock, ShieldAlert, MessageSquare, Send, UserCircle, Star, Phone } from "lucide-react";
+import { MapPin, Truck, CheckCircle, ArrowRight, Clock, ShieldAlert, MessageSquare, Send, UserCircle, Star, Phone, AlertTriangle, X } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
 
 const TRIP_FLOW = ["pending", "pickup", "in_transit", "delivered", "confirmed"];
@@ -25,6 +26,7 @@ export default function TripDetailPage() {
   const [responseText, setResponseText] = useState("");
   const [respondLoading, setRespondLoading] = useState(false);
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -55,10 +57,14 @@ export default function TripDetailPage() {
     delivered: "Confirm this load has been delivered? This cannot be undone.",
   };
 
-  async function updateStatus(newStatus: string) {
-    const message = statusConfirmMessages[newStatus];
-    if (message && !window.confirm(message)) return;
+  function requestStatusUpdate(newStatus: string) {
+    setPendingStatus(newStatus);
+  }
 
+  async function confirmStatusUpdate() {
+    if (!pendingStatus) return;
+    const newStatus = pendingStatus;
+    setPendingStatus(null);
     setActionLoading(true);
     try {
       const res = await fetch(`/api/trips/${id}`, {
@@ -154,7 +160,7 @@ export default function TripDetailPage() {
             </div>
             {nextStatus && trip.status !== "confirmed" && trip.status !== "delivered" && (
               <Button
-                onClick={() => updateStatus(nextStatus)}
+                onClick={() => requestStatusUpdate(nextStatus)}
                 loading={actionLoading}
               >
                 {nextActionLabels[nextStatus] || `Update to ${nextStatus}`}
@@ -357,6 +363,53 @@ export default function TripDetailPage() {
       </div>
 
       <ProfilePreview userId={previewUserId} onClose={() => setPreviewUserId(null)} />
+
+      {/* Confirmation Modal */}
+      <AnimatePresence>
+        {pendingStatus && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onClick={() => setPendingStatus(null)}
+          >
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 p-6 shadow-xl"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="rounded-full bg-orange-100 dark:bg-orange-500/20 p-2">
+                  <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Confirm Action</h3>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                {statusConfirmMessages[pendingStatus] || `Update status to ${pendingStatus}?`}
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setPendingStatus(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={confirmStatusUpdate}
+                >
+                  Confirm
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

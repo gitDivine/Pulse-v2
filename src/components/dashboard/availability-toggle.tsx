@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { AVAILABILITY_STATUS_LABELS } from "@/lib/constants";
 import { useToast } from "@/components/ui/toast";
+import { EyeOff } from "lucide-react";
 
-const STATUSES = ["available", "busy", "offline"] as const;
+const STATUSES = ["available", "busy", "offline", "hidden"] as const;
 
 export function AvailabilityToggle({ initialStatus }: { initialStatus: string }) {
   const { toast } = useToast();
@@ -60,7 +61,11 @@ export function AvailabilityToggle({ initialStatus }: { initialStatus: string })
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
-            <span className={`h-2 w-2 rounded-full ${info.dotColor}`} />
+            {s === "hidden" ? (
+              <EyeOff className="h-3 w-3" />
+            ) : (
+              <span className={`h-2 w-2 rounded-full ${info.dotColor}`} />
+            )}
             {info.label}
           </button>
         );

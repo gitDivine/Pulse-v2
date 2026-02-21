@@ -64,6 +64,7 @@ export const AVAILABILITY_STATUS_LABELS: Record<string, { label: string; color: 
   available: { label: "Available", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", dotColor: "bg-green-500" },
   busy: { label: "Busy", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400", dotColor: "bg-yellow-500" },
   offline: { label: "Offline", color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400", dotColor: "bg-gray-400" },
+  hidden: { label: "Hidden", color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400", dotColor: "" },
 };
 
 export const RATING_OPTIONS = [

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, createServiceRoleSupabase } from "@/lib/supabase/server";
 
-const VALID_STATUSES = ["available", "busy", "offline"];
+const VALID_STATUSES = ["available", "busy", "offline", "hidden"];
 
 // GET /api/carrier/availability — get current carrier availability
 export async function GET() {

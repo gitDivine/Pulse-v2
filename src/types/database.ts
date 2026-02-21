@@ -18,7 +18,7 @@ export type VerificationLevel = "phone" | "bvn_nin" | "cac";
 export type InvitationStatus = "pending" | "viewed" | "bid_placed" | "expired";
 export type DisputeType = "damaged_goods" | "missing_items" | "wrong_items" | "late_delivery" | "not_received" | "overcharge" | "other";
 export type DisputeStatus = "open" | "carrier_responded" | "resolved" | "escalated";
-export type AvailabilityStatus = "available" | "busy" | "offline";
+export type AvailabilityStatus = "available" | "busy" | "offline" | "hidden";
 
 export interface Database {
   public: {

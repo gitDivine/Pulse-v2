@@ -347,12 +347,14 @@ export default function CarrierDirectoryPage() {
                               {(carrier.full_name || "?")[0].toUpperCase()}
                             </span>
                           </div>
-                          <span
-                            className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-[#111] ${
-                              AVAILABILITY_STATUS_LABELS[carrier.availability_status as string]?.dotColor || "bg-gray-400"
-                            }`}
-                            title={AVAILABILITY_STATUS_LABELS[carrier.availability_status as string]?.label || "Offline"}
-                          />
+                          {carrier.availability_status !== "hidden" && (
+                            <span
+                              className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-[#111] ${
+                                AVAILABILITY_STATUS_LABELS[carrier.availability_status as string]?.dotColor || "bg-gray-400"
+                              }`}
+                              title={AVAILABILITY_STATUS_LABELS[carrier.availability_status as string]?.label || "Offline"}
+                            />
+                          )}
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">

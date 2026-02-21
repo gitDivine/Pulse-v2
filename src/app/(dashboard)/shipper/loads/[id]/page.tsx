@@ -106,6 +106,17 @@ export default function LoadDetailPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: "confirmed" }),
         });
+
+        // Auto-resolve any open dispute on this trip (redelivery accepted)
+        if (dispute && dispute.status !== "resolved") {
+          await fetch(`/api/disputes/${dispute.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "resolve", resolution_note: "Redelivery accepted — delivery confirmed" }),
+          });
+          setDispute((prev: any) => prev ? { ...prev, status: "resolved" } : null);
+        }
+
         // Refresh
         const loadRes = await fetch(`/api/loads/${id}`);
         setLoad((await loadRes.json()).load);
@@ -370,7 +381,7 @@ export default function LoadDetailPage() {
         </Card>
 
         {/* Delivery confirmation + dispute */}
-        {load.status === "delivered" && !dispute && !showDisputeForm && (
+        {load.status === "delivered" && !showDisputeForm && (
           <Card className="border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/5">
             <div className="flex items-center gap-3">
               <Truck className="h-8 w-8 text-emerald-600 shrink-0" />

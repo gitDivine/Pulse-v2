@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Sparkles, PlusCircle, Package, Users, Banknote, Rocket,
-  Search, Gavel, MapPin, Wallet, Radio,
+  Search, Gavel, MapPin, Wallet, Radio, Star,
 } from "lucide-react";
 
 export interface TourStep {
@@ -42,6 +42,12 @@ export const SHIPPER_TOUR_STEPS: TourStep[] = [
     icon: Banknote,
     title: "Transparent Pricing",
     description: "A 7% platform fee is added at checkout. Carriers receive exactly what they bid — no hidden costs.",
+  },
+  {
+    id: "reviews",
+    icon: Star,
+    title: "Ratings & Reviews",
+    description: "After a delivery is confirmed, rate your carrier. Your rating is visible on your dashboard — tap it to see all your reviews.",
   },
   {
     id: "done",
@@ -88,6 +94,12 @@ export const CARRIER_TOUR_STEPS: TourStep[] = [
     icon: Radio,
     title: "Set Your Availability",
     description: "Toggle your status so shippers can find you in the carrier directory. It updates automatically when you're active.",
+  },
+  {
+    id: "reviews",
+    icon: Star,
+    title: "Ratings & Reviews",
+    description: "After a delivery is confirmed, both you and the shipper can leave reviews. Your rating shows on your dashboard — tap it to see all feedback.",
   },
   {
     id: "done",

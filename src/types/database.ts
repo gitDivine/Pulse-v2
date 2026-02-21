@@ -41,6 +41,7 @@ export interface Database {
           total_reviews: number;
           availability_status: AvailabilityStatus;
           last_active_at: string | null;
+          is_discoverable: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -58,6 +59,7 @@ export interface Database {
           fleet_size?: number;
           business_type?: string | null;
           availability_status?: AvailabilityStatus;
+          is_discoverable?: boolean;
         };
         Update: {
           role?: UserRole;
@@ -73,6 +75,7 @@ export interface Database {
           business_type?: string | null;
           availability_status?: AvailabilityStatus;
           last_active_at?: string | null;
+          is_discoverable?: boolean;
         };
         Relationships: [];
       };

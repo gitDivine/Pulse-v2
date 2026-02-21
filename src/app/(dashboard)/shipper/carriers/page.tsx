@@ -11,8 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import { NIGERIAN_STATES, VEHICLE_TYPES, RATING_OPTIONS, VERIFICATION_LABELS, AVAILABILITY_STATUS_LABELS } from "@/lib/constants";
+import { timeAgo } from "@/lib/utils/format";
 import {
-  Star, Heart, MapPin, Truck, Shield, Search,
+  Star, Heart, MapPin, Truck, Shield, Search, Clock,
   ChevronLeft, ChevronRight, Send, X, Users, Check,
 } from "lucide-react";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
@@ -363,13 +364,24 @@ export default function CarrierDirectoryPage() {
                         </div>
                       </button>
 
-                      {/* Location */}
-                      {carrier.state && (
-                        <div className="flex items-center gap-1 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                          <MapPin className="h-3 w-3" />
-                          {carrier.city ? `${carrier.city}, ` : ""}{carrier.state}
-                        </div>
-                      )}
+                      {/* Location + last active */}
+                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        {carrier.state && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {carrier.city ? `${carrier.city}, ` : ""}{carrier.state}
+                          </span>
+                        )}
+                        {carrier.availability_status === "offline" && carrier.last_active_at && (
+                          <>
+                            {carrier.state && <span className="text-gray-300 dark:text-gray-600">·</span>}
+                            <span className="flex items-center gap-0.5 text-gray-400 dark:text-gray-500">
+                              <Clock className="h-3 w-3" />
+                              {timeAgo(carrier.last_active_at)}
+                            </span>
+                          </>
+                        )}
+                      </div>
 
                       {/* Rating + fleet */}
                       <div className="flex items-center gap-2 mt-2">

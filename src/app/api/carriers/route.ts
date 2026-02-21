@@ -51,8 +51,9 @@ export async function GET(request: NextRequest) {
 
     let query = serviceSupabase
       .from("profiles")
-      .select("id, full_name, company_name, state, city, fleet_size, avg_rating, total_reviews, verification_level, avatar_url, availability_status, created_at", { count: "exact" })
-      .eq("role", "carrier" as any);
+      .select("id, full_name, company_name, state, city, fleet_size, avg_rating, total_reviews, verification_level, avatar_url, availability_status, last_active_at, created_at", { count: "exact" })
+      .eq("role", "carrier" as any)
+      .eq("is_discoverable", true);
 
     if (availability) query = query.eq("availability_status", availability as any);
     if (state) query = query.eq("state", state);

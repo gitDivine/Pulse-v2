@@ -208,3 +208,21 @@ PULSE is Africa's Logistics Nervous System — a two-sided freight marketplace c
 - Build passes: 0 errors
 - **What's pending**: Run `008_scout_v1.sql` in Supabase SQL Editor
 - **What's next**: Commit & push, test SCOUT flow end-to-end (post load → bid → deliver → confirm → verify address saved → post new load → see autocomplete suggestions)
+
+### Session 12 — 2026-02-21
+- **Carrier bids differentiation**: accepted bids now show the trip status (Pending Pickup, At Pickup, In Transit, Delivered, Confirmed, Disputed) instead of a static "Accepted" badge
+- Modified bids API to join `trips(id, status, trip_number)` through the loads table
+- Updated carrier bids page: accepted bids with trips show trip status badge + trip number, link to trip detail page instead of load page
+- Build passes, pushed to Vercel
+- **What's done**: Carriers can now distinguish between freshly accepted bids and completed/in-progress trips
+- **What's pending**: Carrier Directory plan (migration 006) still available but not yet implemented in this session
+
+### Session 13 — 2026-02-21 (continued)
+- **Carrier availability feature completed**: toggle on dashboard, availability dots + filter in directory, DB trigger for auto-detect
+- **Trip chat system**: contextual P2P messaging between shipper and carrier, anchored to trips. Text + image attachments + read receipts (single/double check marks) + 12s polling. Unread indicators in sidebar + trip cards
+- Created migration 013_trip_messages.sql, messages API (GET+POST), upload API, unread API, TripChat component
+- Integrated chat into carrier trip detail + shipper load detail pages
+- **Carrier directory visibility**: `is_discoverable` toggle on carrier settings, hidden carriers excluded from directory API
+- **Last active time**: offline carriers show "Last active Xh ago" on directory cards
+- Created migration 014_carrier_discoverable.sql
+- **What's pending**: Run 014_carrier_discoverable.sql in Supabase

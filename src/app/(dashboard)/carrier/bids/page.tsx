@@ -150,7 +150,14 @@ export default function CarrierBidsPage() {
                           <p className="text-lg font-bold text-gray-900 dark:text-white">
                             {formatNaira(bid.amount)}
                           </p>
-                          <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+                          {hasTrip ? (
+                            <div className="flex flex-col items-end gap-1">
+                              <Badge className={BID_STATUS_LABELS.accepted.color}>Accepted</Badge>
+                              <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+                            </div>
+                          ) : (
+                            <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+                          )}
                           {load?.budget_amount && bid.amount !== load.budget_amount && (
                             <p className="text-[11px] text-gray-400">
                               Budget: {formatNaira(load.budget_amount)}

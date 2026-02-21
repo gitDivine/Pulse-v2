@@ -9,7 +9,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatNaira, timeAgo, formatWeight, formatDuration } from "@/lib/utils/format";
-import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, TRIP_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISPUTE_STATUS_LABELS } from "@/lib/constants";
+import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, TRIP_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISPUTE_STATUS_LABELS, AVAILABILITY_STATUS_LABELS } from "@/lib/constants";
 import { Select } from "@/components/ui/select";
 import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCircle, Users, AlertTriangle, Upload, X, MessageSquare, ShieldCheck, ShieldAlert, UserCircle } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
@@ -701,9 +701,18 @@ export default function LoadDetailPage() {
                         <button
                           type="button"
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewUserId(bid.carrier_id); }}
-                          className="flex items-center gap-1 text-sm font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors text-left"
+                          className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors text-left"
                         >
-                          <UserCircle className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                          <div className="relative shrink-0">
+                            <UserCircle className="h-4 w-4 text-gray-400" />
+                            {carrier?.availability_status && carrier.availability_status !== "hidden" && (
+                              <span
+                                className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-white dark:border-[#1a1a1a] ${
+                                  AVAILABILITY_STATUS_LABELS[carrier.availability_status]?.dotColor || "bg-gray-400"
+                                }`}
+                              />
+                            )}
+                          </div>
                           {carrier?.company_name || carrier?.full_name || "Unknown Carrier"}
                         </button>
                         <div className="flex items-center gap-2 mt-0.5">

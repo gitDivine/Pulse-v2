@@ -12,7 +12,7 @@ export async function GET(
 
     const { data, error } = await supabase
       .from("bids")
-      .select("*, profiles!bids_carrier_id_fkey(full_name, company_name, avg_rating, total_reviews)")
+      .select("*, profiles!bids_carrier_id_fkey(full_name, company_name, avg_rating, total_reviews, availability_status)")
       .eq("load_id", id)
       .order("created_at", { ascending: true });
 

@@ -90,16 +90,16 @@ export default function CarrierTripsPage() {
                               {load?.destination_city}, {load?.destination_state}
                             </span>
                           </div>
-                          {load?.description && (
-                            <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 ml-5.5 line-clamp-1">
-                              {load.description}
+                          {load?.cargo_description && (
+                            <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 ml-[22px] line-clamp-1">
+                              {load.cargo_description}
                             </p>
                           )}
-                          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1 ml-5.5">
+                          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1 ml-[22px]">
                             <span>{trip.trip_number} · {cargoLabel} · {timeAgo(trip.created_at)}</span>
                           </div>
                           {shipperName && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1 ml-5.5">
+                            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1 ml-[22px]">
                               <UserCircle className="h-3 w-3" />
                               <span>{shipperName}</span>
                             </div>

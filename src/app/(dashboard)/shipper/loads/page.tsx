@@ -11,7 +11,7 @@ import { LOAD_STATUS_LABELS } from "@/lib/constants";
 import { Package, MapPin, ArrowRight, Copy } from "lucide-react";
 import Link from "next/link";
 
-const STATUS_FILTERS = ["all", "posted", "bidding", "accepted", "in_transit", "delivered", "completed", "cancelled"];
+const STATUS_FILTERS = ["all", "posted", "bidding", "accepted", "in_transit", "delivered", "completed", "disputed", "cancelled"];
 
 export default function ShipperLoadsPage() {
   const [loads, setLoads] = useState<any[]>([]);

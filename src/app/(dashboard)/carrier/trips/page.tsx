@@ -10,7 +10,7 @@ import { TRIP_STATUS_LABELS, CARGO_TYPES } from "@/lib/constants";
 import { MapPin, ArrowRight, Truck, UserCircle } from "lucide-react";
 import Link from "next/link";
 
-const STATUS_FILTERS = ["all", "pending", "pickup", "in_transit", "delivered", "confirmed"];
+const STATUS_FILTERS = ["all", "pending", "pickup", "in_transit", "delivered", "confirmed", "disputed"];
 
 export default function CarrierTripsPage() {
   const [trips, setTrips] = useState<any[]>([]);

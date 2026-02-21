@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardTitle } from "@/components/ui/card";
-import { Star, X } from "lucide-react";
+import { Star, X, ChevronRight } from "lucide-react";
 import { timeAgo } from "@/lib/utils/format";
 
 interface RatingCardProps {
@@ -40,12 +40,14 @@ export function RatingCard({ userId, avgRating, totalReviews }: RatingCardProps)
             <div className="rounded-lg p-2.5 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20">
               <Star className="h-5 w-5" />
             </div>
-            <div>
+            <div className="flex-1">
               <p className="text-sm text-gray-500 dark:text-gray-400">Rating</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {avgRating ? `${avgRating.toFixed(1)} (${totalReviews})` : "No reviews"}
               </p>
+              <p className="text-xs text-orange-600 dark:text-orange-400 mt-0.5">View reviews</p>
             </div>
+            <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500 shrink-0" />
           </div>
         </Card>
       </button>

@@ -10,15 +10,23 @@ export async function GET() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data } = await supabase
+    const serviceSupabase = createServiceRoleSupabase();
+    const { data, error } = await serviceSupabase
       .from("profiles")
       .select("availability_status, last_active_at")
       .eq("id", user.id)
       .single();
 
-    return NextResponse.json({ status: data?.availability_status || "offline" });
-  } catch {
-    return NextResponse.json({ error: "Failed to fetch availability" }, { status: 500 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      status: data?.availability_status || "offline",
+      last_active_at: data?.last_active_at || null,
+    });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || "Failed to fetch availability" }, { status: 500 });
   }
 }
 
@@ -34,14 +42,18 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
-    const serviceSupabase = await createServiceRoleSupabase();
+    const serviceSupabase = createServiceRoleSupabase();
 
     // Verify user is a carrier
-    const { data: profile } = await serviceSupabase
+    const { data: profile, error: profileError } = await serviceSupabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
+
+    if (profileError) {
+      return NextResponse.json({ error: profileError.message }, { status: 500 });
+    }
 
     if (profile?.role !== "carrier") {
       return NextResponse.json({ error: "Only carriers can set availability" }, { status: 403 });
@@ -49,13 +61,15 @@ export async function PATCH(request: NextRequest) {
 
     const { error } = await serviceSupabase
       .from("profiles")
-      .update({ availability_status: status, last_active_at: new Date().toISOString() })
+      .update({ availability_status: status as any, last_active_at: new Date().toISOString() } as any)
       .eq("id", user.id);
 
-    if (error) throw error;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ status });
-  } catch {
-    return NextResponse.json({ error: "Failed to update availability" }, { status: 500 });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || "Failed to update availability" }, { status: 500 });
   }
 }

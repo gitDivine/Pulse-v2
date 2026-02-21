@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AVAILABILITY_STATUS_LABELS } from "@/lib/constants";
 import { useToast } from "@/components/ui/toast";
 
@@ -10,6 +10,14 @@ export function AvailabilityToggle({ initialStatus }: { initialStatus: string })
   const { toast } = useToast();
   const [status, setStatus] = useState(initialStatus);
   const [updating, setUpdating] = useState(false);
+
+  // Sync with server on mount (in case server-rendered value is stale)
+  useEffect(() => {
+    fetch("/api/carrier/availability")
+      .then((r) => r.json())
+      .then((data) => { if (data.status) setStatus(data.status); })
+      .catch(() => {});
+  }, []);
 
   async function handleChange(newStatus: string) {
     if (newStatus === status || updating) return;
@@ -23,9 +31,10 @@ export function AvailabilityToggle({ initialStatus }: { initialStatus: string })
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
+      const data = await res.json();
       if (!res.ok) {
         setStatus(prev);
-        toast("Failed to update status", "error");
+        toast(data.error || "Failed to update status", "error");
       }
     } catch {
       setStatus(prev);

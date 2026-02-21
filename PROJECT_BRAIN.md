@@ -242,3 +242,15 @@ PULSE is Africa's Logistics Nervous System — a two-sided freight marketplace c
 - Added `ProfilePreview` component for tap-to-preview carrier profile
 - Modified: `src/app/(dashboard)/shipper/loads/page.tsx`
 - Build passes: 0 errors
+
+- **Platform fee (7%)**: shippers now pay a 7% service fee on top of the carrier's bid amount. Carrier receives exactly their bid amount — no deductions, no visibility of the fee
+- Created `016_platform_fee.sql`: adds `platform_fee` and `total_amount` columns to trips table, backfills existing trips
+- Added `PLATFORM_FEE_RATE` (0.07) and `calculatePlatformFee()` to constants
+- Modified bid acceptance to calculate and store fee at trip creation
+- Payment route now charges `total_amount` (carrier fee + platform fee) via Paystack
+- Webhook notification to carrier still shows `agreed_amount` (what they earn)
+- Shipper load detail: Payment Summary card shows "Carrier fee / Platform fee (7%) / Total" breakdown
+- Bid acceptance confirmation now shows "Total cost: ₦X (incl. 7% platform fee)"
+- Modified: database.ts, constants, bids/[bidId]/route.ts, payments/route.ts, payments/webhook/route.ts, shipper loads/[id]/page.tsx
+- Build passes: 0 errors
+- **What's pending**: Run `016_platform_fee.sql` in Supabase SQL Editor

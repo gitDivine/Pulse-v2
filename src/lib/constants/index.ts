@@ -2,6 +2,12 @@ export const APP_NAME = "PULSE";
 export const APP_TAGLINE = "Africa's Logistics Nervous System";
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
+export const PLATFORM_FEE_RATE = 0.07;
+
+export function calculatePlatformFee(agreedAmountKobo: number): number {
+  return Math.round(agreedAmountKobo * PLATFORM_FEE_RATE);
+}
+
 export const NIGERIAN_STATES = [
   "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue",
   "Borno", "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu",

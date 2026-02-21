@@ -9,7 +9,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatNaira, timeAgo, formatWeight, formatDuration, formatDateShort, getPickupUrgency } from "@/lib/utils/format";
-import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, TRIP_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISPUTE_STATUS_LABELS, AVAILABILITY_STATUS_LABELS } from "@/lib/constants";
+import { LOAD_STATUS_LABELS, BID_STATUS_LABELS, TRIP_STATUS_LABELS, CARGO_TYPES, DISPUTE_TYPES, DISPUTE_STATUS_LABELS, AVAILABILITY_STATUS_LABELS, PLATFORM_FEE_RATE } from "@/lib/constants";
 import { Select } from "@/components/ui/select";
 import { MapPin, ArrowRight, Package, Star, Clock, CheckCircle, Truck, Copy, XCircle, Users, AlertTriangle, Upload, X, MessageSquare, ShieldCheck, ShieldAlert, UserCircle, Calendar } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
@@ -54,7 +54,7 @@ export default function LoadDetailPage() {
       // Fetch trip and dispute info
       const { data: tripData } = await supabase
         .from("trips")
-        .select("id, status, trip_number")
+        .select("id, status, trip_number, agreed_amount, platform_fee, total_amount")
         .eq("load_id", id)
         .single();
       if (tripData) {
@@ -418,6 +418,27 @@ export default function LoadDetailPage() {
         {/* Chat — only when a trip exists */}
         {trip && <TripChat tripId={trip.id} />}
 
+        {/* Payment Summary — visible when trip exists */}
+        {trip && trip.agreed_amount > 0 && (
+          <Card>
+            <CardTitle className="mb-3">Payment Summary</CardTitle>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Carrier fee</span>
+                <span className="text-gray-900 dark:text-white">{formatNaira(trip.agreed_amount)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Platform fee (7%)</span>
+                <span className="text-gray-900 dark:text-white">{formatNaira(trip.platform_fee)}</span>
+              </div>
+              <div className="border-t border-gray-200 dark:border-white/10 pt-2 flex justify-between font-semibold">
+                <span className="text-gray-900 dark:text-white">Total</span>
+                <span className="text-gray-900 dark:text-white">{formatNaira(trip.total_amount)}</span>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Delivery confirmation + dispute */}
         {load.status === "delivered" && !showDisputeForm && (
           <Card className="border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/5">
@@ -768,7 +789,8 @@ export default function LoadDetailPage() {
                                 Accept this bid for {formatNaira(bid.amount)}?
                               </p>
                               <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-0.5">
-                                A trip will be created and all other pending bids will be rejected. This cannot be undone.
+                                Total cost: {formatNaira(bid.amount + Math.round(bid.amount * PLATFORM_FEE_RATE))} (incl. 7% platform fee).
+                                A trip will be created and all other pending bids will be rejected.
                               </p>
                             </div>
                           </div>

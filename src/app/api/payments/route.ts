@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const { data: trip } = await supabase
       .from("trips")
       .select(`
-        id, trip_number, agreed_amount, status, carrier_id,
+        id, trip_number, agreed_amount, platform_fee, total_amount, status, carrier_id,
         loads(shipper_id, load_number)
       `)
       .eq("id", tripId)
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: t.agreed_amount, // Already in kobo
+        amount: t.total_amount, // Carrier amount + platform fee, in kobo
         email: shipper?.email || `${shipper?.phone}@pulse.ng`,
         reference: `PLS-${t.trip_number}-${Date.now()}`,
         callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/shipper/dashboard`,

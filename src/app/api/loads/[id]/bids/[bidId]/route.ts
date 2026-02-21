@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, createServiceRoleSupabase } from "@/lib/supabase/server";
+import { calculatePlatformFee } from "@/lib/constants";
 
 function formatKobo(kobo: number): string {
   return `₦${(kobo / 100).toLocaleString()}`;
@@ -114,7 +115,8 @@ export async function PATCH(
         .update({ status: "accepted", accepted_bid_id: bidId })
         .eq("id", loadId);
 
-      // Create trip
+      // Create trip with platform fee
+      const platformFee = calculatePlatformFee(bid.amount);
       const { data: tripData } = await serviceSupabase
         .from("trips")
         .insert({
@@ -122,6 +124,8 @@ export async function PATCH(
           carrier_id: bid.carrier_id,
           vehicle_id: bid.vehicle_id,
           agreed_amount: bid.amount,
+          platform_fee: platformFee,
+          total_amount: bid.amount + platformFee,
         })
         .select("id, trip_number")
         .single();

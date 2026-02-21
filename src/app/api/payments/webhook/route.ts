@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       // Get trip details for notification
       const { data: trip } = await supabase
         .from("trips")
-        .select("carrier_id, trip_number, agreed_amount, loads(shipper_id, load_number)")
+        .select("carrier_id, trip_number, agreed_amount, platform_fee, total_amount, loads(shipper_id, load_number)")
         .eq("id", tripId)
         .single();
 

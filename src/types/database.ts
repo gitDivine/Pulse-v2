@@ -246,6 +246,8 @@ export interface Database {
           carrier_id: string;
           vehicle_id: string | null;
           agreed_amount: number;
+          platform_fee: number;
+          total_amount: number;
           status: TripStatus;
           started_at: string | null;
           picked_up_at: string | null;
@@ -261,6 +263,8 @@ export interface Database {
           carrier_id: string;
           vehicle_id?: string | null;
           agreed_amount: number;
+          platform_fee: number;
+          total_amount: number;
         };
         Update: {
           vehicle_id?: string | null;
@@ -269,6 +273,8 @@ export interface Database {
           picked_up_at?: string | null;
           delivered_at?: string | null;
           confirmed_at?: string | null;
+          platform_fee?: number;
+          total_amount?: number;
           payment_reference?: string | null;
           paid_at?: string | null;
         };

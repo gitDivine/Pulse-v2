@@ -73,9 +73,6 @@ export default function CarrierLoadDetailPage() {
             .single();
           if (trip) setTripId(trip.id);
         }
-      } else if (loadData.load?.budget_amount) {
-        // Pre-fill bid amount with shipper's budget (kobo → naira)
-        setBidAmount(String(loadData.load.budget_amount / 100));
       }
       setLoading(false);
     }
@@ -124,7 +121,7 @@ export default function CarrierLoadDetailPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to withdraw bid");
       setExistingBid(null);
-      setBidAmount(load?.budget_amount ? String(load.budget_amount / 100) : "");
+      setBidAmount("");
       setBidMessage("");
       setEstimatedHours("");
       setVehicleId("");

@@ -790,25 +790,12 @@ export default function LoadDetailPage() {
                         <div className="mt-3 rounded-lg bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 p-3">
                           <div className="flex items-start gap-2 mb-2">
                             <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
-                            <div className="flex-1">
+                            <div>
                               <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
-                                Accept this bid?
+                                Accept this bid for {formatNaira(bid.amount)}?
                               </p>
-                              <div className="mt-1.5 space-y-1 text-xs text-yellow-700 dark:text-yellow-400">
-                                <div className="flex justify-between">
-                                  <span>Carrier fee</span>
-                                  <span className="font-medium">{formatNaira(bid.amount)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Platform fee (7%)</span>
-                                  <span className="font-medium">{formatNaira(Math.round(bid.amount * PLATFORM_FEE_RATE))}</span>
-                                </div>
-                                <div className="flex justify-between border-t border-yellow-300 dark:border-yellow-500/30 pt-1 font-semibold">
-                                  <span>You pay</span>
-                                  <span>{formatNaira(bid.amount + Math.round(bid.amount * PLATFORM_FEE_RATE))}</span>
-                                </div>
-                              </div>
-                              <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-1.5">
+                              <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-0.5">
+                                Total cost: {formatNaira(bid.amount + Math.round(bid.amount * PLATFORM_FEE_RATE))} (incl. 7% platform fee).
                                 A trip will be created and all other pending bids will be rejected.
                               </p>
                             </div>

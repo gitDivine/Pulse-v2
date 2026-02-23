@@ -8,7 +8,7 @@ import { Topbar } from "@/components/dashboard/topbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { NIGERIAN_STATES, CARGO_TYPES, PLATFORM_FEE_RATE } from "@/lib/constants";
+import { NIGERIAN_STATES, CARGO_TYPES } from "@/lib/constants";
 import { formatNaira } from "@/lib/utils/format";
 import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { MapPin, Package, Banknote, CheckCircle, ArrowLeft, ArrowRight, Copy, ChevronDown } from "lucide-react";
@@ -399,18 +399,6 @@ export default function PostLoadPage() {
                   />
                   Price is negotiable
                 </label>
-                <div className="rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3.5 py-3">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    A <span className="font-semibold text-gray-700 dark:text-gray-300">{Math.round(PLATFORM_FEE_RATE * 100)}% platform fee</span> will
-                    be added to the carrier's accepted bid amount.
-                    {budgetAmount && (
-                      <span className="block mt-1 text-gray-600 dark:text-gray-300">
-                        Example: if a carrier bids {formatNaira(parseInt(budgetAmount) * 100)}, your total will be{" "}
-                        <span className="font-semibold">{formatNaira(Math.round(parseInt(budgetAmount) * 100 * (1 + PLATFORM_FEE_RATE)))}</span>.
-                      </span>
-                    )}
-                  </p>
-                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <Input
                     label="Pickup Date"
